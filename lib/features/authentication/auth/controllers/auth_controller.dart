@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:gamdiwala/features/authentication/auth/models/company_dm.dart';
+import 'package:gamdiwala/features/authentication/auth/screens/select_company_screen.dart';
+import 'package:get/get.dart';
 import 'package:gamdiwala/features/authentication/auth/repos/auth_repo.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
-import 'package:gamdiwala/utils/helpers/secure_storage_helper.dart';
 import 'package:gamdiwala/utils/helpers/device_helper.dart';
-import 'package:get/get.dart';
 
-class AuthController extends GetxController
-    with GetSingleTickerProviderStateMixin {
+class AuthController extends GetxController {
   var isLoading = false.obs;
-  var isLoginMode = true.obs; // true for login, false for register
+  var isLoginMode = true.obs;
 
   final loginFormKey = GlobalKey<FormState>();
   final registerFormKey = GlobalKey<FormState>();
 
-  // Login Controllers
   var loginMobileController = TextEditingController();
   var loginPasswordController = TextEditingController();
 
-  // Register Controllers
   var firstNameController = TextEditingController();
   var lastNameController = TextEditingController();
   var registerMobileController = TextEditingController();
@@ -27,89 +25,42 @@ class AuthController extends GetxController
   var hasAttemptedLogin = false.obs;
   var hasAttemptedRegister = false.obs;
 
-  // Password visibility
   var obscuredLoginPassword = true.obs;
   var obscuredRegisterPassword = true.obs;
   var obscuredConfirmPassword = true.obs;
-
-  late AnimationController animationController;
-  late Animation<double> animation;
+  var companies = <CompanyDm>[].obs;
 
   @override
   void onInit() {
     super.onInit();
-    animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: animationController, curve: Curves.easeInOut),
-    );
     setupValidationListeners();
   }
 
-  @override
-  void onClose() {
-    animationController.dispose();
-    loginMobileController.dispose();
-    loginPasswordController.dispose();
-    firstNameController.dispose();
-    lastNameController.dispose();
-    registerMobileController.dispose();
-    registerPasswordController.dispose();
-    confirmPasswordController.dispose();
-    super.onClose();
+  void setupValidationListeners() {
+    loginMobileController.addListener(validateLoginForm);
+    loginPasswordController.addListener(validateLoginForm);
+
+    firstNameController.addListener(validateRegisterForm);
+    lastNameController.addListener(validateRegisterForm);
+    registerMobileController.addListener(validateRegisterForm);
+    registerPasswordController.addListener(validateRegisterForm);
+    confirmPasswordController.addListener(validateRegisterForm);
   }
 
-  void setupValidationListeners() {
-    // Login validation listeners
-    loginMobileController.addListener(() {
-      if (hasAttemptedLogin.value) {
-        loginFormKey.currentState?.validate();
-      }
-    });
-    loginPasswordController.addListener(() {
-      if (hasAttemptedLogin.value) {
-        loginFormKey.currentState?.validate();
-      }
-    });
+  void validateLoginForm() {
+    if (hasAttemptedLogin.value) {
+      loginFormKey.currentState?.validate();
+    }
+  }
 
-    // Register validation listeners
-    firstNameController.addListener(() {
-      if (hasAttemptedRegister.value) {
-        registerFormKey.currentState?.validate();
-      }
-    });
-    lastNameController.addListener(() {
-      if (hasAttemptedRegister.value) {
-        registerFormKey.currentState?.validate();
-      }
-    });
-    registerMobileController.addListener(() {
-      if (hasAttemptedRegister.value) {
-        registerFormKey.currentState?.validate();
-      }
-    });
-    registerPasswordController.addListener(() {
-      if (hasAttemptedRegister.value) {
-        registerFormKey.currentState?.validate();
-      }
-    });
-    confirmPasswordController.addListener(() {
-      if (hasAttemptedRegister.value) {
-        registerFormKey.currentState?.validate();
-      }
-    });
+  void validateRegisterForm() {
+    if (hasAttemptedRegister.value) {
+      registerFormKey.currentState?.validate();
+    }
   }
 
   void toggleMode() {
     isLoginMode.value = !isLoginMode.value;
-    if (isLoginMode.value) {
-      animationController.reverse();
-    } else {
-      animationController.forward();
-    }
-    // Reset validation states
     hasAttemptedLogin.value = false;
     hasAttemptedRegister.value = false;
   }
@@ -137,48 +88,20 @@ class AuthController extends GetxController
     }
 
     try {
-      await LoginRepo.loginUser(
+      final fetchedCompanies = await AuthRepo.loginUser(
         mobileNo: loginMobileController.text,
         password: loginPasswordController.text,
         fcmToken: '',
         deviceId: deviceId,
       );
 
-      int cid = 1;
-      int yearId = 2024;
-      var tokenResponse = await LoginRepo.getToken(
-        mobileNumber: loginMobileController.text,
-        cid: cid,
-        yearId: yearId,
+      companies.assignAll(fetchedCompanies);
+      Get.to(
+        () => SelectCompanyScreen(
+          companies: companies,
+          mobileNumber: loginMobileController.text,
+        ),
       );
-
-      await SecureStorageHelper.write('token', tokenResponse['token']);
-      await SecureStorageHelper.write('fullName', tokenResponse['fullName']);
-      await SecureStorageHelper.write(
-        'userType',
-        tokenResponse['userType'].toString(),
-      );
-      await SecureStorageHelper.write(
-        'mobileNo',
-        tokenResponse['mobileNo'].toString(),
-      );
-      await SecureStorageHelper.write(
-        'userId',
-        tokenResponse['userId'].toString(),
-      );
-      await SecureStorageHelper.write(
-        'ledgerStart',
-        tokenResponse['ledgerStart'] ?? '',
-      );
-      await SecureStorageHelper.write(
-        'ledgerEnd',
-        tokenResponse['ledgerEnd'] ?? '',
-      );
-      await SecureStorageHelper.write('company', 'Demo Company');
-      await SecureStorageHelper.write('coCode', cid.toString());
-
-      // Navigate to your main screen
-      // Get.offAll(() => YourMainScreen());
     } catch (e) {
       if (e is Map<String, dynamic>) {
         showErrorSnackbar('Login Error', e['message']);
@@ -194,7 +117,7 @@ class AuthController extends GetxController
     isLoading.value = true;
 
     try {
-      var response = await LoginRepo.registerUser(
+      var response = await AuthRepo.registerUser(
         firstName: firstNameController.text,
         lastName: lastNameController.text,
         mobileNo: registerMobileController.text,
@@ -205,18 +128,13 @@ class AuthController extends GetxController
         String message = response['message'];
         showSuccessSnackbar('Success', message);
 
-        // Switch to login mode after successful registration
         toggleMode();
 
-        // Clear registration form
         firstNameController.clear();
         lastNameController.clear();
         registerMobileController.clear();
         registerPasswordController.clear();
         confirmPasswordController.clear();
-
-        // Pre-fill login mobile number
-        loginMobileController.text = registerMobileController.text;
       }
     } catch (e) {
       if (e is Map<String, dynamic>) {
@@ -227,5 +145,17 @@ class AuthController extends GetxController
     } finally {
       isLoading.value = false;
     }
+  }
+
+  @override
+  void onClose() {
+    loginMobileController.dispose();
+    loginPasswordController.dispose();
+    firstNameController.dispose();
+    lastNameController.dispose();
+    registerMobileController.dispose();
+    registerPasswordController.dispose();
+    confirmPasswordController.dispose();
+    super.onClose();
   }
 }

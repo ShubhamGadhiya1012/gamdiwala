@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
-import 'package:gamdiwala/features/authentication/reset_password/controllers/reset_password_controller.dart';
+import 'package:gamdiwala/features/authentication/auth/controllers/reset_password_controller.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
 import 'package:gamdiwala/styles/text_styles.dart';
 import 'package:gamdiwala/utils/screen_utils/app_paddings.dart';
@@ -11,9 +11,14 @@ import 'package:gamdiwala/widgets/app_text_form_field.dart';
 import 'package:get/get.dart';
 
 class ResetPasswordScreen extends StatelessWidget {
-  ResetPasswordScreen({super.key, required this.mobileNumber});
+  ResetPasswordScreen({
+    super.key,
+    required this.mobileNumber,
+    required this.fullName,
+  });
 
   final String mobileNumber;
+  final String fullName;
 
   final ResetPasswordController _controller = Get.put(
     ResetPasswordController(),
@@ -28,7 +33,6 @@ class ResetPasswordScreen extends StatelessWidget {
             FocusManager.instance.primaryFocus?.unfocus();
           },
           child: Scaffold(
-            backgroundColor: kColorBackground,
             resizeToAvoidBottomInset: false,
             body: Center(
               child: SingleChildScrollView(
@@ -40,13 +44,19 @@ class ResetPasswordScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Reset Password',
-                        style: TextStyles.kRegularMontserrat(
-                          color: kColorTextPrimary,
-                          fontSize: FontSizes.k40FontSize,
+                        'Hi, $fullName',
+                        style: TextStyles.kSemiBoldMontserrat(
+                          color: kColorPrimary,
+                          fontSize: FontSizes.k30FontSize,
                         ),
                       ),
-                      AppSpaces.v30,
+                      Text(
+                        'Please enter a new password to continue.',
+                        style: TextStyles.kRegularMontserrat(
+                          fontSize: FontSizes.k16FontSize,
+                        ),
+                      ),
+                      AppSpaces.v40,
                       Obx(
                         () => AppTextFormField(
                           controller: _controller.newPasswordController,

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:gamdiwala/features/authentication/auth/repos/reset_password_repo.dart';
 import 'package:gamdiwala/features/authentication/auth/screens/auth_screen.dart';
-import 'package:gamdiwala/features/authentication/reset_password/repos/reset_password_repo.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
 import 'package:get/get.dart';
+
 
 class ResetPasswordController extends GetxController {
   var isLoading = false.obs;

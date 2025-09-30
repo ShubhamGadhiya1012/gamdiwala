@@ -23,7 +23,7 @@ class AppLoadingOverlay extends StatelessWidget {
 }
 
 class AppProgressIndicator extends StatelessWidget {
-  const AppProgressIndicator({super.key, this.size = 100});
+  const AppProgressIndicator({super.key, this.size = 130});
 
   final double size;
 
@@ -34,7 +34,7 @@ class AppProgressIndicator extends StatelessWidget {
       height: size,
       child: Center(
         child: Lottie.asset(
-          'assets/loader.json',
+          'assets/loading.json',
           width: size,
           height: size,
           fit: BoxFit.fill,
