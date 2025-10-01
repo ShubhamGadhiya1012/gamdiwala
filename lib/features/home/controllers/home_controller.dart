@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/constants/image_constants.dart';
 import 'package:gamdiwala/features/authentication/auth/screens/auth_screen.dart';
+import 'package:gamdiwala/features/home/models/item_dm.dart';
 import 'package:gamdiwala/features/user_settings/models/user_access_dm.dart';
 import 'package:gamdiwala/features/user_settings/repos/user_access_repo.dart';
 import 'package:gamdiwala/features/user_settings/screens/unauth_users_screen.dart';
 import 'package:gamdiwala/features/user_settings/screens/users_screen.dart';
-import 'package:gamdiwala/features/home/models/count_dm.dart';
 import 'package:gamdiwala/features/home/models/home_menu_item_dm.dart';
 import 'package:gamdiwala/features/home/repos/home_repo.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
@@ -19,29 +19,46 @@ import 'package:gamdiwala/utils/helpers/secure_storage_helper.dart';
 import 'package:gamdiwala/utils/helpers/version_helper.dart';
 import 'package:gamdiwala/widgets/app_text_button.dart';
 import 'package:get/get.dart';
-
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeController extends GetxController {
   var isLoading = false.obs;
-
   var company = ''.obs;
   var menuAccess = <MenuAccessDm>[].obs;
-  var counts = <CountDm>[].obs;
-
   var menuItems = <HomeMenuItemDm>[].obs;
-
   var selectedMenuIndex = 0.obs;
   var expandedMenuIndex = RxInt(-1);
   var appVersion = ''.obs;
+  var itemList = <ItemDm>[].obs;
+
   @override
   void onInit() async {
     super.onInit();
+    await getItems();
     await _loadVersion();
     await loadCompany();
     await checkAppVersion();
-    await getCounts();
     await getUserAccess();
+  }
+
+  Future<void> getItems() async {
+    isLoading.value = true;
+
+    String? selectPCode = await SecureStorageHelper.read('selectPCode');
+    String? selectPName = await SecureStorageHelper.read('selectPName');
+
+    print(selectPCode);
+    print(selectPName);
+    try {
+      final fetchedList = await HomeRepo.getItems(
+        pCode: selectPCode.toString(),
+      );
+      itemList.assignAll(fetchedList);
+    } catch (e) {
+      showErrorSnackbar('Error', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> _loadVersion() async {
@@ -64,6 +81,8 @@ class HomeController extends GetxController {
       );
 
       menuAccess.assignAll(fetchedUserAccess.menuAccess);
+
+      buildMenuItems();
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
     } finally {
@@ -204,41 +223,16 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> getCounts() async {
-    isLoading.value = true;
-
-    try {
-      final fetchedCounts = await HomeRepo.getCounts(seCode: '');
-      counts.assignAll(fetchedCounts);
-      buildMenuItems();
-    } catch (e) {
-      showErrorSnackbar('Error', e.toString());
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
   void buildMenuItems() {
     menuItems.value = [
       HomeMenuItemDm(
         menuName: 'User Settings',
-        count: '',
-        subCount: '',
+
         icon: kIconUserSettings,
         subMenus: [
           HomeMenuItemDm(
-            menuName: 'User Auth',
-            count: '',
-            subCount: '',
-            icon: kIconUserAuthorisation,
-            onTap: () {
-              Get.to(() => UnauthUsersScreen());
-            },
-          ),
-          HomeMenuItemDm(
             menuName: 'User Rights',
-            count: '',
-            subCount: '',
+
             icon: kIconUserRights,
             onTap: () {
               Get.to(() => UsersScreen(fromWhere: 'R'));
@@ -246,14 +240,33 @@ class HomeController extends GetxController {
           ),
           HomeMenuItemDm(
             menuName: 'Manage User',
-            count: '',
-            subCount: '',
+
             icon: kIconUserManagement,
             onTap: () {
               Get.to(() => UsersScreen(fromWhere: 'M'));
             },
           ),
+          HomeMenuItemDm(
+            menuName: 'User Auth',
+
+            icon: kIconUserAuthorisation,
+            onTap: () {
+              Get.to(() => UnauthUsersScreen());
+            },
+          ),
         ],
+      ),
+      HomeMenuItemDm(
+        menuName: 'Ledger',
+
+        icon: kIconUserManagement,
+        onTap: () {},
+      ),
+      HomeMenuItemDm(
+        menuName: 'Invoice',
+
+        icon: kIconUserManagement,
+        onTap: () {},
       ),
     ];
   }

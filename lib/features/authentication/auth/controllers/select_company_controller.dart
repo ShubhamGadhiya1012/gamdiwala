@@ -19,8 +19,6 @@ class SelectCompanyController extends GetxController {
   var selectedFinYear = ''.obs;
   var selectedYearId = 0.obs;
 
-
-
   Future<void> getYears() async {
     try {
       isLoading.value = true;
@@ -31,6 +29,11 @@ class SelectCompanyController extends GetxController {
 
       years.assignAll(fetchedYears);
       finYears.assignAll(fetchedYears.map((year) => year.finYear).toList());
+
+      if (fetchedYears.isNotEmpty) {
+        selectedFinYear.value = fetchedYears.first.finYear;
+        selectedYearId.value = fetchedYears.first.yearId;
+      }
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
     } finally {
@@ -46,12 +49,10 @@ class SelectCompanyController extends GetxController {
     selectedYearId.value = selectedYearObj.yearId;
   }
 
- 
   Future<void> getToken({
     required String mobileNumber,
     required int cid,
     required int yearId,
-
   }) async {
     isLoading.value = true;
 
@@ -60,7 +61,6 @@ class SelectCompanyController extends GetxController {
         mobileNumber: mobileNumber,
         cid: cid,
         yearId: yearId,
-      
       );
 
       await SecureStorageHelper.write('token', response['token']);

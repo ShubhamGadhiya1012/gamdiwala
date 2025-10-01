@@ -4,8 +4,7 @@ enum HomeMenuCardType { type1, type2 }
 
 class HomeMenuItemDm {
   final String menuName;
-  final String count;
-  final String subCount;
+
   final String icon;
   final Widget? screen;
   final VoidCallback? onTap;
@@ -14,8 +13,7 @@ class HomeMenuItemDm {
 
   HomeMenuItemDm({
     required this.menuName,
-    required this.count,
-    required this.subCount,
+
     required this.icon,
     this.screen,
     this.onTap,

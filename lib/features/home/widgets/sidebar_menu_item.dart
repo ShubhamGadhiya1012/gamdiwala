@@ -47,7 +47,7 @@ class SidebarMenuItem extends StatelessWidget {
             ),
             child: Row(
               children: [
-                SvgPicture.asset(menu.icon, height: 24, width: 24),
+                SvgPicture.asset(menu.icon, height: 28, width: 24),
                 AppSpaces.h14,
                 Expanded(
                   child: Column(
@@ -62,18 +62,6 @@ class SidebarMenuItem extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (menu.count.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          menu.count,
-                          style: TextStyles.kRegularMontserrat(
-                            fontSize: FontSizes.k12FontSize,
-                            color: kColorDarkGrey.withOpacity(0.7),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -227,26 +215,6 @@ class CompactSidebarMenuItem extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (menu.count.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? kColorPrimary
-                          : kColorDarkGrey.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      menu.count,
-                      style: TextStyles.kSemiBoldMontserrat(
-                        fontSize: FontSizes.k12FontSize,
-                        color: isSelected ? kColorWhite : kColorDarkGrey,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -345,45 +313,9 @@ class _AnimatedSidebarMenuItemState extends State<AnimatedSidebarMenuItem> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (widget.menu.subCount.isNotEmpty) ...[
-                          AppSpaces.v2,
-                          Text(
-                            widget.menu.subCount,
-                            style: TextStyles.kRegularMontserrat(
-                              fontSize: FontSizes.k12FontSize,
-                              color: widget.isSelected
-                                  ? kColorWhite.withOpacity(0.8)
-                                  : kColorDarkGrey,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
                       ],
                     ),
                   ),
-                  if (widget.menu.count.isNotEmpty)
-                    Container(
-                      padding: AppPaddings.combined(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: widget.isSelected
-                            ? kColorWhite
-                            : kColorPrimary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        widget.menu.count,
-                        style: TextStyles.kBoldMontserrat(
-                          fontSize: FontSizes.k12FontSize,
-                          color: widget.isSelected
-                              ? kColorPrimary
-                              : kColorPrimary,
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),

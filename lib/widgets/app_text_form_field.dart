@@ -24,6 +24,7 @@ class AppTextFormField extends StatelessWidget {
     this.onFieldSubmitted,
     this.fontSize,
     this.fontWeight,
+    this.showClearIcon = false,
   });
 
   final TextEditingController controller;
@@ -41,70 +42,91 @@ class AppTextFormField extends StatelessWidget {
   final void Function(String)? onFieldSubmitted;
   final double? fontSize;
   final FontWeight? fontWeight;
+  final bool showClearIcon;
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      cursorColor: kColorTextPrimary,
-      cursorHeight: 20,
-      inputFormatters: inputFormatters,
-      enabled: enabled ?? true,
-      maxLines: maxLines ?? 1,
-      minLines: minLines ?? 1,
-      validator: validator,
-      onChanged: onChanged,
-      keyboardType: keyboardType ?? TextInputType.text,
-      style: TextStyles.kMediumMontserrat(
-        fontSize: fontSize ?? FontSizes.k16FontSize,
-        color: kColorTextPrimary,
-      ).copyWith(fontWeight: fontWeight ?? FontWeight.w400),
-      obscureText: isObscure!,
-      onFieldSubmitted: onFieldSubmitted,
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyles.kRegularMontserrat(
-          fontSize: FontSizes.k16FontSize,
-          color: kColorDarkGrey,
-        ),
-        labelText: hintText,
-        labelStyle: TextStyles.kRegularMontserrat(
-          fontSize: FontSizes.k16FontSize,
-          color: kColorDarkGrey,
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.auto,
-        floatingLabelStyle: TextStyles.kMediumMontserrat(
-          fontSize: FontSizes.k18FontSize,
-          color: kColorPrimary,
-        ),
-        errorStyle: TextStyles.kRegularMontserrat(
-          fontSize: FontSizes.k16FontSize,
-          color: kColorRed,
-        ),
-        border: outlineInputBorder(borderColor: kColorDarkGrey, borderWidth: 1),
-        enabledBorder: outlineInputBorder(
-          borderColor: kColorDarkGrey,
-          borderWidth: 1,
-        ),
-        disabledBorder: outlineInputBorder(
-          borderColor: kColorDarkGrey,
-          borderWidth: 1,
-        ),
-        focusedBorder: outlineInputBorder(
-          borderColor: kColorPrimary,
-          borderWidth: 1,
-        ),
-
-        errorBorder: outlineInputBorder(borderColor: kColorRed, borderWidth: 1),
-        contentPadding: AppPaddings.combined(
-          horizontal: 16.appWidth,
-          vertical: 8.appHeight,
-        ),
-        filled: true,
-        fillColor: fillColor ?? kColorWhite,
-        suffixIcon: suffixIcon,
-        suffixIconColor: kColorPrimary,
-      ),
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, child) {
+        return TextFormField(
+          controller: controller,
+          cursorColor: kColorTextPrimary,
+          cursorHeight: 20,
+          inputFormatters: inputFormatters,
+          enabled: enabled ?? true,
+          maxLines: maxLines ?? 1,
+          minLines: minLines ?? 1,
+          validator: validator,
+          onChanged: onChanged,
+          keyboardType: keyboardType ?? TextInputType.text,
+          style: TextStyles.kMediumMontserrat(
+            fontSize: fontSize ?? FontSizes.k16FontSize,
+            color: kColorTextPrimary,
+          ).copyWith(fontWeight: fontWeight ?? FontWeight.w400),
+          obscureText: isObscure!,
+          onFieldSubmitted: onFieldSubmitted,
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyles.kRegularMontserrat(
+              fontSize: FontSizes.k16FontSize,
+              color: kColorDarkGrey,
+            ),
+            labelText: hintText,
+            labelStyle: TextStyles.kRegularMontserrat(
+              fontSize: FontSizes.k16FontSize,
+              color: kColorDarkGrey,
+            ),
+            floatingLabelBehavior: FloatingLabelBehavior.auto,
+            floatingLabelStyle: TextStyles.kMediumMontserrat(
+              fontSize: FontSizes.k18FontSize,
+              color: kColorPrimary,
+            ),
+            errorStyle: TextStyles.kRegularMontserrat(
+              fontSize: FontSizes.k16FontSize,
+              color: kColorRed,
+            ),
+            border: outlineInputBorder(
+              borderColor: kColorDarkGrey,
+              borderWidth: 1,
+            ),
+            enabledBorder: outlineInputBorder(
+              borderColor: kColorDarkGrey,
+              borderWidth: 1,
+            ),
+            disabledBorder: outlineInputBorder(
+              borderColor: kColorDarkGrey,
+              borderWidth: 1,
+            ),
+            focusedBorder: outlineInputBorder(
+              borderColor: kColorPrimary,
+              borderWidth: 1,
+            ),
+            errorBorder: outlineInputBorder(
+              borderColor: kColorRed,
+              borderWidth: 1,
+            ),
+            contentPadding: AppPaddings.combined(
+              horizontal: 16.appWidth,
+              vertical: 8.appHeight,
+            ),
+            filled: true,
+            fillColor: fillColor ?? kColorWhite,
+            suffixIcon: showClearIcon && value.text.isNotEmpty
+                ? IconButton(
+                    icon: Icon(Icons.clear, color: kColorDarkGrey),
+                    onPressed: () {
+                      controller.clear();
+                      if (onChanged != null) {
+                        onChanged!('');
+                      }
+                    },
+                  )
+                : suffixIcon,
+            suffixIconColor: kColorPrimary,
+          ),
+        );
+      },
     );
   }
 

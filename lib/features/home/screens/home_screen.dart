@@ -5,7 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/constants/image_constants.dart';
 import 'package:gamdiwala/features/home/controllers/home_controller.dart';
-import 'package:gamdiwala/features/home/models/home_menu_item_dm.dart';
+import 'package:gamdiwala/features/home/widgets/item_card.dart';
 import 'package:gamdiwala/features/home/widgets/sidebar_menu_item.dart';
 import 'package:gamdiwala/features/profile/screens/profile_screen.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
@@ -36,28 +36,60 @@ class HomeScreen extends StatelessWidget {
                 child: Container(
                   color: Colors.grey[50],
                   child: Obx(() {
-                    final accessMap = {
-                      for (var menu in _controller.menuAccess)
-                        menu.menuName: menu.access,
-                    };
-
-                    final visibleMenuItems = _controller.menuItems
-                        .where((item) => accessMap[item.menuName] ?? false)
-                        .toList();
-
-                    if (visibleMenuItems.isEmpty &&
+                    // Show items list by default on home screen
+                    if (_controller.itemList.isEmpty &&
                         !_controller.isLoading.value) {
-                      return _buildEmptyState(context);
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 80,
+                              color: kColorDarkGrey.withOpacity(0.3),
+                            ),
+                            AppSpaces.h24,
+                            Text(
+                              'No Items Found',
+                              style: TextStyles.kBoldMontserrat(
+                                fontSize: FontSizes.k24FontSize,
+                                color: kColorTextPrimary,
+                              ),
+                            ),
+                            AppSpaces.h12,
+                            Text(
+                              'No items available to display',
+                              style: TextStyles.kRegularMontserrat(
+                                fontSize: FontSizes.k16FontSize,
+                                color: kColorDarkGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
                     }
 
-                    final selectedIndex = _controller.selectedMenuIndex.value;
-                    if (selectedIndex >= 0 &&
-                        selectedIndex < visibleMenuItems.length) {
-                      final selectedMenu = visibleMenuItems[selectedIndex];
-                      return _buildContentArea(context, selectedMenu);
-                    }
-
-                    return const SizedBox.shrink();
+                    return RefreshIndicator(
+                      backgroundColor: kColorWhite,
+                      color: kColorPrimary,
+                      strokeWidth: 2.5,
+                      onRefresh: () async {
+                        await _controller.getItems();
+                      },
+                      child: ListView.builder(
+                        padding: AppPaddings.p10,
+                        itemCount: _controller.itemList.length,
+                        itemBuilder: (context, index) {
+                          final item = _controller.itemList[index];
+                          return ItemCard(
+                            item: item,
+                            onTap: () {
+                              // Handle item tap if needed
+                            },
+                          );
+                        },
+                      ),
+                    );
                   }),
                 ),
               ),
@@ -104,7 +136,7 @@ class HomeScreen extends StatelessWidget {
                   fontSize: FontSizes.k18FontSize,
                   color: kColorPrimary,
                 ),
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -237,7 +269,6 @@ class HomeScreen extends StatelessWidget {
                       onRefresh: () async {
                         await _controller.checkAppVersion();
                         await _controller.getUserAccess();
-                        await _controller.getCounts();
                       },
                       child: ListView.builder(
                         padding: AppPaddings.custom(top: 8, bottom: 8),
@@ -266,7 +297,7 @@ class HomeScreen extends StatelessWidget {
                                     } else {
                                       _controller.selectedMenuIndex.value =
                                           index;
-                                      Get.back();
+
                                       if (menu.onTap != null) {
                                         menu.onTap!();
                                       }
@@ -278,7 +309,6 @@ class HomeScreen extends StatelessWidget {
                                     return SubMenuItem(
                                       menu: subMenu,
                                       onTap: () {
-                                        Get.back();
                                         if (subMenu.onTap != null) {
                                           subMenu.onTap!();
                                         }
@@ -300,10 +330,10 @@ class HomeScreen extends StatelessWidget {
                   end: Alignment.centerRight,
                   colors: [
                     kColorPrimary.withOpacity(0.3),
-                    kColorPrimary.withOpacity(0.3),
-                    kColorPrimary.withOpacity(0.3),
-                    kColorPrimary.withOpacity(0.3),
-                    kColorPrimary.withOpacity(0.3),
+                    kColorPrimary.withOpacity(0.4),
+                    kColorPrimary.withOpacity(0.6),
+                    kColorPrimary.withOpacity(0.8),
+                    kColorPrimary.withOpacity(1),
                   ],
                 ),
               ),
@@ -320,150 +350,6 @@ class HomeScreen extends StatelessWidget {
           ],
         );
       }),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.dashboard_outlined,
-            size: 80,
-            color: kColorDarkGrey.withOpacity(0.3),
-          ),
-          AppSpaces.h24,
-          Text(
-            'Welcome to Dashboard',
-            style: TextStyles.kBoldMontserrat(
-              fontSize: FontSizes.k24FontSize,
-              color: kColorTextPrimary,
-            ),
-          ),
-          AppSpaces.h12,
-          Padding(
-            padding: AppPaddings.p20,
-            child: Text(
-              'Select a menu to get started',
-              style: TextStyles.kRegularMontserrat(
-                fontSize: FontSizes.k16FontSize,
-                color: kColorDarkGrey,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContentArea(BuildContext context, HomeMenuItemDm selectedMenu) {
-    if (selectedMenu.screen != null) {
-      return selectedMenu.screen!;
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: AppPaddings.p20,
-          decoration: BoxDecoration(
-            color: kColorWhite,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              SvgPicture.asset(
-                selectedMenu.icon,
-                height: 28,
-                width: 28,
-                colorFilter: ColorFilter.mode(kColorPrimary, BlendMode.srcIn),
-              ),
-              AppSpaces.h16,
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      selectedMenu.menuName,
-                      style: TextStyles.kBoldMontserrat(
-                        fontSize: FontSizes.k20FontSize,
-                        color: kColorTextPrimary,
-                      ),
-                    ),
-                    if (selectedMenu.count.isNotEmpty) ...[
-                      AppSpaces.h4,
-                      Text(
-                        selectedMenu.count,
-                        style: TextStyles.kRegularMontserrat(
-                          fontSize: FontSizes.k14FontSize,
-                          color: kColorDarkGrey,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: Center(
-            child: Padding(
-              padding: AppPaddings.p20,
-              child: Container(
-                padding: AppPaddings.p24,
-                decoration: BoxDecoration(
-                  color: kColorWhite,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.construction_outlined,
-                      size: 64,
-                      color: kColorPrimary.withOpacity(0.6),
-                    ),
-                    AppSpaces.h16,
-                    Text(
-                      '${selectedMenu.menuName} Content',
-                      style: TextStyles.kSemiBoldMontserrat(
-                        fontSize: FontSizes.k18FontSize,
-                        color: kColorTextPrimary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    AppSpaces.h8,
-                    Text(
-                      'This section is under development',
-                      style: TextStyles.kRegularMontserrat(
-                        fontSize: FontSizes.k14FontSize,
-                        color: kColorDarkGrey,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
