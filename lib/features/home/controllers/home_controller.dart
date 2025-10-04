@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/constants/image_constants.dart';
 import 'package:gamdiwala/features/authentication/auth/screens/auth_screen.dart';
+import 'package:gamdiwala/features/home/models/cart_item_dm.dart';
 import 'package:gamdiwala/features/home/models/item_dm.dart';
 import 'package:gamdiwala/features/user_settings/models/user_access_dm.dart';
 import 'package:gamdiwala/features/user_settings/repos/user_access_repo.dart';
@@ -30,6 +31,9 @@ class HomeController extends GetxController {
   var expandedMenuIndex = RxInt(-1);
   var appVersion = ''.obs;
   var itemList = <ItemDm>[].obs;
+
+  var cartItems = <CartItemDm>[].obs;
+  var cartCount = 0.obs;
 
   @override
   void onInit() async {
@@ -276,6 +280,42 @@ class HomeController extends GetxController {
       expandedMenuIndex.value = -1;
     } else {
       expandedMenuIndex.value = index;
+    }
+  }
+
+  Future<void> saveCartItem({
+    required ItemDm item,
+    required double qty,
+    required double caratQty,
+    required double caratNos,
+  }) async {
+    try {
+      String? selectPCode = await SecureStorageHelper.read('selectPCode');
+
+      double amount = 0;
+      if (item.caratNos > 0) {
+        amount = item.rate * item.caratQty * caratQty;
+      } else {
+        amount = item.rate * qty;
+      }
+
+      final response = await HomeRepo.saveCartItem(
+        pCode: selectPCode ?? '',
+        iCode: item.iCode,
+        qty: qty,
+        rate: item.rate,
+        amount: amount,
+        packQty: item.packQty,
+        caratNos: caratNos,
+        caratQty: caratQty,
+        itemPack: item.itemPack,
+        fat: item.fat,
+        lr: item.lr,
+      );
+
+      if (response != null && response['message'] != null) {}
+    } catch (e) {
+      showErrorSnackbar('Error', e.toString());
     }
   }
 }

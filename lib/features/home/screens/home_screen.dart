@@ -141,6 +141,48 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
+          // Cart Icon with Badge
+          Obx(
+            () => Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.shopping_cart_outlined,
+                    color: kColorPrimary,
+                  ),
+                  onPressed: () {
+                    // Navigate to cart screen
+                    // Get.to(() => CartScreen());
+                  },
+                ),
+                if (_controller.cartCount.value > 0)
+                  Positioned(
+                    right: 6,
+                    top: 6,
+                    child: Container(
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: BoxConstraints(minWidth: 18, minHeight: 18),
+                      child: Center(
+                        child: Text(
+                          _controller.cartCount.value > 99
+                              ? '99+'
+                              : '${_controller.cartCount.value}',
+                          style: TextStyles.kBoldMontserrat(
+                            fontSize: FontSizes.k10FontSize,
+                            color: kColorWhite,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
           IconButton(
             icon: Hero(
               tag: "profile_icon",

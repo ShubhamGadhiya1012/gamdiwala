@@ -49,4 +49,47 @@ class HomeRepo {
       throw e.toString();
     }
   }
+
+  static Future<dynamic> saveCartItem({
+    required String pCode,
+    required String iCode,
+    required double qty,
+    required double rate,
+    required double amount,
+    required double packQty,
+    required double caratNos,
+    required double caratQty,
+    required double itemPack,
+    required double fat,
+    required double lr,
+  }) async {
+    String? token = await SecureStorageHelper.read('token');
+
+    final requestBody = {
+      "PCode": pCode,
+      "ICode": iCode,
+      "Qty": qty,
+      "Rate": rate,
+      "Amount": amount,
+      "PackQty": packQty,
+      "CaratNos": caratNos,
+      "CaratQty": caratQty,
+      "ItemPack": itemPack,
+      "Fat": fat,
+      "LR": lr,
+    };
+
+    print(requestBody);
+
+    try {
+      final response = await ApiService.postRequest(
+        endpoint: '/Cart/addToCart',
+        token: token,
+        requestBody: requestBody,
+      );
+      return response;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
 }
