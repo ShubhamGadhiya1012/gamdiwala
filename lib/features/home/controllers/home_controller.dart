@@ -39,6 +39,7 @@ class HomeController extends GetxController {
   void onInit() async {
     super.onInit();
     await getItems();
+    await getCartItems();
     await _loadVersion();
     await loadCompany();
     await checkAppVersion();
@@ -58,6 +59,24 @@ class HomeController extends GetxController {
         pCode: selectPCode.toString(),
       );
       itemList.assignAll(fetchedList);
+    } catch (e) {
+      showErrorSnackbar('Error', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> getCartItems() async {
+    isLoading.value = true;
+    try {
+      String? selectPCode = await SecureStorageHelper.read('selectPCode');
+
+      final fetchedCartItems = await HomeRepo.getCartItems(
+        pCode: selectPCode.toString(),
+      );
+
+      cartItems.assignAll(fetchedCartItems);
+      cartCount.value = fetchedCartItems.length;
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
     } finally {
@@ -289,6 +308,7 @@ class HomeController extends GetxController {
     required double caratQty,
     required double caratNos,
   }) async {
+    isLoading.value = true;
     try {
       String? selectPCode = await SecureStorageHelper.read('selectPCode');
 
@@ -313,9 +333,47 @@ class HomeController extends GetxController {
         lr: item.lr,
       );
 
-      if (response != null && response['message'] != null) {}
+      if (response != null && response['message'] != null) {
+        final index = cartItems.indexWhere((cart) => cart.iCode == item.iCode);
+
+        if (qty == 0 && caratQty == 0 && caratNos == 0) {
+          if (index != -1) {
+            cartItems.removeAt(index);
+            cartCount.value = cartItems.length;
+          }
+        } else {
+          final updatedCartItem = CartItemDm(
+            date: DateTime.now().toString(),
+            pCode: selectPCode ?? '',
+            partyName: '',
+            iCode: item.iCode,
+            itemName: item.iName,
+            qty: qty,
+            rate: item.rate,
+            amount: amount,
+            caratNos: caratNos,
+            caratQty: caratQty,
+            itemPack: item.itemPack,
+            packQty: item.packQty,
+            fat: item.fat,
+            lr: item.lr,
+          );
+
+          if (index != -1) {
+            cartItems[index] = updatedCartItem;
+          } else {
+            cartItems.add(updatedCartItem);
+            cartCount.value = cartItems.length;
+          }
+        }
+
+        cartItems.refresh();
+      }
     } catch (e) {
+      print(e);
       showErrorSnackbar('Error', e.toString());
+    } finally {
+      isLoading.value = false;
     }
   }
 }

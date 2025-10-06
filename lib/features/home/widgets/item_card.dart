@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
@@ -9,7 +11,6 @@ import 'package:gamdiwala/utils/screen_utils/app_paddings.dart';
 import 'package:gamdiwala/utils/screen_utils/app_spacings.dart';
 import 'package:gamdiwala/widgets/app_button.dart';
 import 'package:gamdiwala/widgets/app_card.dart';
-import 'package:gamdiwala/widgets/app_text_button.dart';
 import 'package:gamdiwala/widgets/app_text_form_field.dart';
 import 'package:get/get.dart';
 
@@ -25,7 +26,7 @@ class ItemCard extends StatefulWidget {
 
 class _ItemCardState extends State<ItemCard> {
   final HomeController _controller = Get.find<HomeController>();
-
+  StreamSubscription? cartListener;
   var showInputs = false.obs;
   var caratCount = 0.0.obs;
   var totalNos = 0.0.obs;
@@ -33,9 +34,40 @@ class _ItemCardState extends State<ItemCard> {
   var nosController = TextEditingController();
   var qtyController = TextEditingController();
   var totalAmount = 0.0.obs;
+  @override
+  void initState() {
+    super.initState();
+    _checkCartStatus();
+
+    cartListener = _controller.cartItems.listen((_) {
+      _checkCartStatus();
+    });
+  }
+
+  void _checkCartStatus() {
+    final cartItem = _controller.cartItems.firstWhereOrNull(
+      (cart) => cart.iCode == widget.item.iCode,
+    );
+
+    if (cartItem != null) {
+      showInputs.value = true;
+
+      if (widget.item.caratNos > 0) {
+        caratCount.value = cartItem.caratQty;
+        totalNos.value = cartItem.caratNos;
+        caratController.text = cartItem.caratQty.toStringAsFixed(0);
+        nosController.text = cartItem.caratNos.toStringAsFixed(0);
+      } else {
+        qtyController.text = cartItem.qty.toStringAsFixed(0);
+      }
+
+      totalAmount.value = cartItem.amount;
+    }
+  }
 
   @override
   void dispose() {
+    cartListener?.cancel();
     caratController.dispose();
     nosController.dispose();
     qtyController.dispose();
@@ -75,7 +107,9 @@ class _ItemCardState extends State<ItemCard> {
         caratQty: caratQtyValue,
         caratNos: caratNosValue,
       );
-    } catch (e) {}
+    } catch (e) {
+      print(e);
+    }
   }
 
   void _showCaratDialog() {
@@ -205,6 +239,12 @@ class _ItemCardState extends State<ItemCard> {
   }
 
   void _updateCaratManually(String value) {
+    if (value.isEmpty) {
+      caratCount.value = 0;
+      _calculateAmount();
+      return;
+    }
+
     double carats = double.tryParse(value) ?? 0;
     caratCount.value = carats;
     _calculateAmount();
@@ -212,19 +252,16 @@ class _ItemCardState extends State<ItemCard> {
   }
 
   void _updateNosManually(String value) {
+    if (value.isEmpty) {
+      totalNos.value = 0;
+      _calculateAmount();
+      return;
+    }
+
     double nos = double.tryParse(value) ?? 0;
     totalNos.value = nos;
     _calculateAmount();
     _saveCart();
-  }
-
-  void _clearInputs() {
-    showInputs.value = false;
-    caratCount.value = 0;
-    totalNos.value = 0;
-    nosController.clear();
-    caratController.clear();
-    totalAmount.value = 0;
   }
 
   void _incrementQty() {
@@ -258,12 +295,50 @@ class _ItemCardState extends State<ItemCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.item.iName,
-            style: TextStyles.kSemiBoldMontserrat(
-              fontSize: FontSizes.k16FontSize,
-              color: kColorTextPrimary,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.item.iName,
+                  style: TextStyles.kSemiBoldMontserrat(
+                    fontSize: FontSizes.k16FontSize,
+                    color: kColorTextPrimary,
+                  ),
+                ),
+              ),
+              Obx(() {
+                if (showInputs.value) {
+                  return InkWell(
+                    onTap: () async {
+                      showInputs.value = false;
+
+                      if (widget.item.caratNos > 0) {
+                        caratCount.value = 0;
+                        totalNos.value = 0;
+                        caratController.clear();
+                        nosController.clear();
+                      } else {
+                        qtyController.text = '0';
+                        qtyController.clear();
+                      }
+
+                      totalAmount.value = 0;
+                      await _saveCart();
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.delete_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                    ),
+                  );
+                }
+                return SizedBox.shrink();
+              }),
+            ],
           ),
           AppSpaces.h8,
           Wrap(
@@ -434,17 +509,6 @@ class _ItemCardState extends State<ItemCard> {
                         ],
                       ),
                     ),
-                    AppSpaces.h10,
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AppTextButton(
-                          onPressed: _clearInputs,
-                          title: 'Clear',
-                          fontSize: FontSizes.k14FontSize,
-                        ),
-                      ],
-                    ),
                   ],
                 );
               } else {
@@ -526,6 +590,10 @@ class _ItemCardState extends State<ItemCard> {
                                 fillColor: kColorWhite,
                               ),
                               onChanged: (value) {
+                                if (value.isEmpty) {
+                                  _calculateAmount();
+                                  return;
+                                }
                                 _calculateAmount();
                                 _saveCart();
                               },

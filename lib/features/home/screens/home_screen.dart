@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/constants/image_constants.dart';
 import 'package:gamdiwala/features/home/controllers/home_controller.dart';
+import 'package:gamdiwala/features/home/screens/cart_screen.dart';
 import 'package:gamdiwala/features/home/widgets/item_card.dart';
 import 'package:gamdiwala/features/home/widgets/sidebar_menu_item.dart';
 import 'package:gamdiwala/features/profile/screens/profile_screen.dart';
@@ -152,8 +153,8 @@ class HomeScreen extends StatelessWidget {
                     color: kColorPrimary,
                   ),
                   onPressed: () {
-                    // Navigate to cart screen
-                    // Get.to(() => CartScreen());
+                    
+                    Get.to(() => CartScreen());
                   },
                 ),
                 if (_controller.cartCount.value > 0)

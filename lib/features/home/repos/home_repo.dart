@@ -1,3 +1,4 @@
+import 'package:gamdiwala/features/home/models/cart_item_dm.dart';
 import 'package:gamdiwala/features/home/models/item_dm.dart';
 import 'package:gamdiwala/services/api_service.dart';
 import 'package:gamdiwala/utils/helpers/secure_storage_helper.dart';
@@ -91,5 +92,21 @@ class HomeRepo {
     } catch (e) {
       throw e.toString();
     }
+  }
+
+  static Future<List<CartItemDm>> getCartItems({required String pCode}) async {
+    String? token = await SecureStorageHelper.read('token');
+
+    final response = await ApiService.getRequest(
+      endpoint: '/Cart/getCart',
+      token: token,
+      queryParams: {'PCODE': pCode},
+    );
+
+    if (response == null || response['data'] == null) return [];
+
+    return (response['data'] as List)
+        .map((item) => CartItemDm.fromJson(item))
+        .toList();
   }
 }
