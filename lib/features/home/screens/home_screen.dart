@@ -1,12 +1,11 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/constants/image_constants.dart';
 import 'package:gamdiwala/features/home/controllers/home_controller.dart';
+import 'package:gamdiwala/features/home/controllers/cart_controller.dart';
 import 'package:gamdiwala/features/home/screens/cart_screen.dart';
-import 'package:gamdiwala/features/home/widgets/item_card.dart';
+import 'package:gamdiwala/features/home/widgets/home_item_card.dart';
 import 'package:gamdiwala/features/home/widgets/sidebar_menu_item.dart';
 import 'package:gamdiwala/features/profile/screens/profile_screen.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
@@ -19,7 +18,8 @@ import 'package:get/get.dart';
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
 
-  final HomeController _controller = Get.put(HomeController());
+  final HomeController _homeController = Get.put(HomeController());
+  final CartController _cartController = Get.put(CartController());
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -37,9 +37,8 @@ class HomeScreen extends StatelessWidget {
                 child: Container(
                   color: Colors.grey[50],
                   child: Obx(() {
-                    // Show items list by default on home screen
-                    if (_controller.itemList.isEmpty &&
-                        !_controller.isLoading.value) {
+                    if (_homeController.itemList.isEmpty &&
+                        !_homeController.isLoading.value) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -75,18 +74,18 @@ class HomeScreen extends StatelessWidget {
                       color: kColorPrimary,
                       strokeWidth: 2.5,
                       onRefresh: () async {
-                        await _controller.getItems();
+                        await _homeController.getItems();
+                        await _cartController.getCartItems();
                       },
                       child: ListView.builder(
                         padding: AppPaddings.p10,
-                        itemCount: _controller.itemList.length,
+                        itemCount: _homeController.itemList.length,
                         itemBuilder: (context, index) {
-                          final item = _controller.itemList[index];
-                          return ItemCard(
+                          final item = _homeController.itemList[index];
+                          return HomeItemCard(
                             item: item,
-                            onTap: () {
-                              // Handle item tap if needed
-                            },
+                            onTap:
+                                () {}, // Empty function, nullable is handled in HomeItemCard
                           );
                         },
                       ),
@@ -97,7 +96,13 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-        Obx(() => AppLoadingOverlay(isLoading: _controller.isLoading.value)),
+        Obx(
+          () => AppLoadingOverlay(
+            isLoading:
+                _homeController.isLoading.value ||
+                _cartController.isLoading.value,
+          ),
+        ),
       ],
     );
   }
@@ -132,7 +137,7 @@ class HomeScreen extends StatelessWidget {
           Expanded(
             child: Obx(
               () => Text(
-                _controller.company.value,
+                _homeController.company.value,
                 style: TextStyles.kBoldMontserrat(
                   fontSize: FontSizes.k18FontSize,
                   color: kColorPrimary,
@@ -142,7 +147,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Cart Icon with Badge
           Obx(
             () => Stack(
               clipBehavior: Clip.none,
@@ -153,11 +157,10 @@ class HomeScreen extends StatelessWidget {
                     color: kColorPrimary,
                   ),
                   onPressed: () {
-                    
                     Get.to(() => CartScreen());
                   },
                 ),
-                if (_controller.cartCount.value > 0)
+                if (_cartController.cartCount.value > 0)
                   Positioned(
                     right: 6,
                     top: 6,
@@ -170,9 +173,9 @@ class HomeScreen extends StatelessWidget {
                       constraints: BoxConstraints(minWidth: 18, minHeight: 18),
                       child: Center(
                         child: Text(
-                          _controller.cartCount.value > 99
+                          _cartController.cartCount.value > 99
                               ? '99+'
-                              : '${_controller.cartCount.value}',
+                              : '${_cartController.cartCount.value}',
                           style: TextStyles.kBoldMontserrat(
                             fontSize: FontSizes.k10FontSize,
                             color: kColorWhite,
@@ -208,10 +211,11 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: kColorWhite,
       child: Obx(() {
         final accessMap = {
-          for (var menu in _controller.menuAccess) menu.menuName: menu.access,
+          for (var menu in _homeController.menuAccess)
+            menu.menuName: menu.access,
         };
 
-        final visibleMenuItems = _controller.menuItems
+        final visibleMenuItems = _homeController.menuItems
             .where((item) => accessMap[item.menuName] ?? false)
             .toList();
 
@@ -251,8 +255,8 @@ class HomeScreen extends StatelessWidget {
                       () => AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
                         child: Text(
-                          _controller.company.value,
-                          key: ValueKey(_controller.company.value),
+                          _homeController.company.value,
+                          key: ValueKey(_homeController.company.value),
                           style: TextStyles.kBoldMontserrat(
                             fontSize: FontSizes.k20FontSize,
                             color: kColorWhite,
@@ -310,8 +314,8 @@ class HomeScreen extends StatelessWidget {
                       color: kColorPrimary,
                       strokeWidth: 2.5,
                       onRefresh: () async {
-                        await _controller.checkAppVersion();
-                        await _controller.getUserAccess();
+                        await _homeController.checkAppVersion();
+                        await _homeController.getUserAccess();
                       },
                       child: ListView.builder(
                         padding: AppPaddings.custom(top: 8, bottom: 8),
@@ -320,7 +324,8 @@ class HomeScreen extends StatelessWidget {
                           final menu = visibleMenuItems[index];
                           return Obx(() {
                             final isExpanded =
-                                _controller.expandedMenuIndex.value == index;
+                                _homeController.expandedMenuIndex.value ==
+                                index;
                             final hasSubMenus =
                                 menu.subMenus != null &&
                                 menu.subMenus!.isNotEmpty;
@@ -330,17 +335,18 @@ class HomeScreen extends StatelessWidget {
                                 SidebarMenuItem(
                                   menu: menu,
                                   isSelected:
-                                      _controller.selectedMenuIndex.value ==
+                                      _homeController.selectedMenuIndex.value ==
                                       index,
                                   isExpanded: isExpanded,
                                   hasSubMenus: hasSubMenus,
                                   onTap: () {
                                     if (hasSubMenus) {
-                                      _controller.toggleMenuExpansion(index);
+                                      _homeController.toggleMenuExpansion(
+                                        index,
+                                      );
                                     } else {
-                                      _controller.selectedMenuIndex.value =
+                                      _homeController.selectedMenuIndex.value =
                                           index;
-
                                       if (menu.onTap != null) {
                                         menu.onTap!();
                                       }
@@ -382,7 +388,7 @@ class HomeScreen extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  'v${_controller.appVersion.value}',
+                  'v${_homeController.appVersion.value}',
                   style: TextStyles.kBoldMontserrat(
                     fontSize: FontSizes.k12FontSize,
                     color: kColorWhite,

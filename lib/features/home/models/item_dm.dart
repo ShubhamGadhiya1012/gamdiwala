@@ -11,9 +11,6 @@ class ItemDm {
   final double itemPack;
   final double fat;
   final double lr;
-  final double qty;
-  final double caratCount;
-  final int nosCount;
 
   ItemDm({
     required this.iCode,
@@ -28,9 +25,6 @@ class ItemDm {
     required this.itemPack,
     required this.fat,
     required this.lr,
-    required this.qty,
-    required this.caratCount,
-    required this.nosCount,
   });
 
   factory ItemDm.fromJson(Map<String, dynamic> json) {
@@ -47,9 +41,9 @@ class ItemDm {
       itemPack: (json['ItemPack'] ?? 0).toDouble(),
       fat: (json['FAT'] ?? 0).toDouble(),
       lr: (json['LR'] ?? 0).toDouble(),
-      qty: (json['Qty'] ?? 0).toDouble(),
-      caratCount: (json['CaratCount'] ?? 0).toDouble(),
-      nosCount: (json['NosCount'] ?? 0).toInt(),
     );
   }
+
+  // Helper to check if item uses carat system
+  bool get usesCaratSystem => caratNos > 0;
 }

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
-import 'package:gamdiwala/features/home/controllers/home_controller.dart';
-import 'package:gamdiwala/features/home/models/item_dm.dart';
-import 'package:gamdiwala/features/home/widgets/item_card.dart';
+import 'package:gamdiwala/features/home/controllers/cart_controller.dart';
+import 'package:gamdiwala/features/home/widgets/cart_item_card.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
 import 'package:gamdiwala/styles/text_styles.dart';
 import 'package:gamdiwala/utils/screen_utils/app_paddings.dart';
@@ -13,7 +12,7 @@ import 'package:get/get.dart';
 class CartScreen extends StatelessWidget {
   CartScreen({super.key});
 
-  final HomeController _controller = Get.find<HomeController>();
+  final CartController _controller = Get.find<CartController>();
 
   @override
   Widget build(BuildContext context) {
@@ -81,32 +80,11 @@ class CartScreen extends StatelessWidget {
                     child: ListView.builder(
                       padding: AppPaddings.p10,
                       itemCount: _controller.cartItems.length,
-
                       itemBuilder: (context, index) {
                         final cartItem = _controller.cartItems[index];
-
-                        final item = ItemDm(
-                          iCode: cartItem.iCode,
-                          iName: cartItem.itemName,
-                          unit: '',
-                          rate: cartItem.rate,
-                          packQty: cartItem.packQty,
-                          caratNos: cartItem.caratNos,
-                          caratQty: cartItem.caratQty,
-                          itemPack: cartItem.itemPack,
-                          fat: cartItem.fat,
-                          lr: cartItem.lr,
-                          description: '',
-                          hsnNo: '',
-                          qty: cartItem.qty,
-                          caratCount: cartItem.caratCount,
-                          nosCount: cartItem.nosCount,
-                        );
-
-                        return ItemCard(
+                        return CartItemCard(
                           key: ValueKey(cartItem.iCode),
-                          item: item,
-                          onTap: () {},
+                          cartItem: cartItem,
                         );
                       },
                     ),
@@ -124,10 +102,7 @@ class CartScreen extends StatelessWidget {
 
   Widget _buildCartSummary() {
     return Obx(() {
-      double totalAmount = _controller.cartItems.fold(
-        0,
-        (sum, item) => sum + item.amount,
-      );
+      double totalAmount = _controller.getTotalAmount();
 
       return Container(
         padding: AppPaddings.p16,

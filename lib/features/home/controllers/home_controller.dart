@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/constants/image_constants.dart';
 import 'package:gamdiwala/features/authentication/auth/screens/auth_screen.dart';
-import 'package:gamdiwala/features/home/models/cart_item_dm.dart';
+import 'package:gamdiwala/features/home/models/home_menu_item_dm.dart';
 import 'package:gamdiwala/features/home/models/item_dm.dart';
+import 'package:gamdiwala/features/home/repos/home_repo.dart';
 import 'package:gamdiwala/features/user_settings/models/user_access_dm.dart';
 import 'package:gamdiwala/features/user_settings/repos/user_access_repo.dart';
 import 'package:gamdiwala/features/user_settings/screens/unauth_users_screen.dart';
 import 'package:gamdiwala/features/user_settings/screens/users_screen.dart';
-import 'package:gamdiwala/features/home/models/home_menu_item_dm.dart';
-import 'package:gamdiwala/features/home/repos/home_repo.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
 import 'package:gamdiwala/styles/text_styles.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
@@ -30,53 +29,25 @@ class HomeController extends GetxController {
   var appVersion = ''.obs;
   var itemList = <ItemDm>[].obs;
 
-  var cartItems = <CartItemDm>[].obs;
-  var cartCount = 0.obs;
-
   @override
   void onInit() async {
     super.onInit();
-    await getItems();
-    await getCartItems();
     await _loadVersion();
     await loadCompany();
     await checkAppVersion();
     await getUserAccess();
+    await getItems();
   }
 
   Future<void> getItems() async {
     isLoading.value = true;
-
     String? selectPCode = await SecureStorageHelper.read('selectPCode');
-    String? selectPName = await SecureStorageHelper.read('selectPName');
 
-    print(selectPCode);
-    print(selectPName);
     try {
       final fetchedList = await HomeRepo.getItems(
         pCode: selectPCode.toString(),
       );
       itemList.assignAll(fetchedList);
-
-      await getCartItems();
-    } catch (e) {
-      showErrorSnackbar('Error', e.toString());
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> getCartItems() async {
-    isLoading.value = true;
-    try {
-      String? selectPCode = await SecureStorageHelper.read('selectPCode');
-
-      final fetchedCartItems = await HomeRepo.getCartItems(
-        pCode: selectPCode.toString(),
-      );
-
-      cartItems.assignAll(fetchedCartItems);
-      cartCount.value = fetchedCartItems.length;
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
     } finally {
@@ -90,7 +61,7 @@ class HomeController extends GetxController {
 
   Future<void> loadCompany() async {
     String? companyName = await SecureStorageHelper.read('company');
-    company.value = companyName!;
+    company.value = companyName ?? '';
   }
 
   Future<void> getUserAccess() async {
@@ -104,7 +75,6 @@ class HomeController extends GetxController {
       );
 
       menuAccess.assignAll(fetchedUserAccess.menuAccess);
-
       buildMenuItems();
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
@@ -117,9 +87,7 @@ class HomeController extends GetxController {
     isLoading.value = true;
     try {
       await SecureStorageHelper.clearAll();
-
       Get.offAll(() => AuthScreen());
-
       showSuccessSnackbar(
         'Logged Out',
         'You have been successfully logged out.',
@@ -250,12 +218,10 @@ class HomeController extends GetxController {
     menuItems.value = [
       HomeMenuItemDm(
         menuName: 'User Settings',
-
         icon: kIconUserSettings,
         subMenus: [
           HomeMenuItemDm(
             menuName: 'User Rights',
-
             icon: kIconUserRights,
             onTap: () {
               Get.to(() => UsersScreen(fromWhere: 'R'));
@@ -263,7 +229,6 @@ class HomeController extends GetxController {
           ),
           HomeMenuItemDm(
             menuName: 'Manage User',
-
             icon: kIconUserManagement,
             onTap: () {
               Get.to(() => UsersScreen(fromWhere: 'M'));
@@ -271,7 +236,6 @@ class HomeController extends GetxController {
           ),
           HomeMenuItemDm(
             menuName: 'User Auth',
-
             icon: kIconUserAuthorisation,
             onTap: () {
               Get.to(() => UnauthUsersScreen());
@@ -281,13 +245,11 @@ class HomeController extends GetxController {
       ),
       HomeMenuItemDm(
         menuName: 'Ledger',
-
         icon: kIconUserManagement,
         onTap: () {},
       ),
       HomeMenuItemDm(
         menuName: 'Invoice',
-
         icon: kIconUserManagement,
         onTap: () {},
       ),
@@ -299,120 +261,6 @@ class HomeController extends GetxController {
       expandedMenuIndex.value = -1;
     } else {
       expandedMenuIndex.value = index;
-    }
-  }
-
-  Future<void> saveCartItem({
-    required ItemDm item,
-    required double qty,
-    required double caratQty,
-    required double caratNos,
-  }) async {
-    isLoading.value = true;
-    try {
-      String? selectPCode = await SecureStorageHelper.read('selectPCode');
-
-      double amount = 0;
-      if (item.caratNos > 0) {
-        amount = item.rate * item.caratQty * caratQty;
-      } else {
-        amount = item.rate * qty;
-      }
-
-      final response = await HomeRepo.saveCartItem(
-        pCode: selectPCode ?? '',
-        iCode: item.iCode,
-        qty: qty,
-        rate: item.rate,
-        amount: amount,
-        packQty: item.packQty,
-        caratNos: caratNos,
-        caratQty: caratQty,
-        itemPack: item.itemPack,
-        fat: item.fat,
-        lr: item.lr,
-      );
-
-      if (response != null && response['message'] != null) {
-        final itemIndex = itemList.indexWhere((i) => i.iCode == item.iCode);
-        if (itemIndex != -1) {
-          final updatedItem = ItemDm(
-            iCode: item.iCode,
-            iName: item.iName,
-            description: item.description,
-            unit: item.unit,
-            rate: item.rate,
-            hsnNo: item.hsnNo,
-            packQty: item.packQty,
-            caratNos: item.caratNos,
-            caratQty: item.caratQty,
-            itemPack: item.itemPack,
-            fat: item.fat,
-            lr: item.lr,
-            qty: qty,
-            caratCount: caratQty,
-            nosCount: caratNos.toInt(),
-          );
-          itemList[itemIndex] = updatedItem;
-          itemList.refresh();
-        }
-
-        final index = cartItems.indexWhere((cart) => cart.iCode == item.iCode);
-
-        if (qty == 0 && caratQty == 0 && caratNos == 0) {
-          if (index != -1) {
-            cartItems.removeAt(index);
-            cartCount.value = cartItems.length;
-          }
-        } else {
-          final updatedCartItem = CartItemDm(
-            date: DateTime.now().toString(),
-            pCode: selectPCode ?? '',
-            partyName: '',
-            iCode: item.iCode,
-            itemName: item.iName,
-            qty: qty,
-            rate: item.rate,
-            amount: amount,
-            caratNos: caratNos,
-            caratQty: caratQty,
-            itemPack: item.itemPack,
-            packQty: item.packQty,
-            fat: item.fat,
-            lr: item.lr,
-            nosCount: caratNos.toInt(),
-            caratCount: caratQty,
-          );
-
-          if (index != -1) {
-            cartItems[index] = updatedCartItem;
-          } else {
-            cartItems.add(updatedCartItem);
-            cartCount.value = cartItems.length;
-          }
-        }
-
-        cartItems.refresh();
-      }
-
-      cartCount.value = await _getCartCount();
-    } catch (e) {
-      print(e);
-      showErrorSnackbar('Error', e.toString());
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<int> _getCartCount() async {
-    try {
-      String? selectPCode = await SecureStorageHelper.read('selectPCode');
-      final fetchedCartItems = await HomeRepo.getCartItems(
-        pCode: selectPCode ?? '',
-      );
-      return fetchedCartItems.length;
-    } catch (e) {
-      return 0;
     }
   }
 }

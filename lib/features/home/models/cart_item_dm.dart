@@ -55,4 +55,7 @@ class CartItemDm {
       caratCount: (json['CaratCount'] ?? 0).toDouble(),
     );
   }
+
+  // Helper to check if cart item uses carat system
+  bool get usesCaratSystem => caratNos > 0;
 }
