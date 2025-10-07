@@ -38,36 +38,42 @@ class _ItemCardState extends State<ItemCard> {
   void initState() {
     super.initState();
     _checkCartStatus();
-
-    cartListener = _controller.cartItems.listen((_) {
-      _checkCartStatus();
-    });
   }
 
   void _checkCartStatus() {
-    final cartItem = _controller.cartItems.firstWhereOrNull(
-      (cart) => cart.iCode == widget.item.iCode,
-    );
-
-    if (cartItem != null) {
+    if (widget.item.qty > 0 ||
+        widget.item.caratCount > 0 ||
+        widget.item.nosCount > 0) {
       showInputs.value = true;
 
       if (widget.item.caratNos > 0) {
-        caratCount.value = cartItem.caratQty;
-        totalNos.value = cartItem.caratNos;
-        caratController.text = cartItem.caratQty.toStringAsFixed(0);
-        nosController.text = cartItem.caratNos.toStringAsFixed(0);
+        caratCount.value = widget.item.caratCount;
+        totalNos.value = widget.item.nosCount.toDouble();
+        caratController.text = widget.item.caratCount.toStringAsFixed(0);
+        nosController.text = widget.item.nosCount.toString();
+        _calculateAmount();
       } else {
-        qtyController.text = cartItem.qty.toStringAsFixed(0);
+        qtyController.text = widget.item.qty.toStringAsFixed(0);
+        _calculateAmount();
       }
+    }
+  }
 
-      totalAmount.value = cartItem.amount;
+  @override
+  void didUpdateWidget(ItemCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Only update if not loading and values actually changed
+    if (!_controller.isLoading.value &&
+        (oldWidget.item.qty != widget.item.qty ||
+            oldWidget.item.caratCount != widget.item.caratCount ||
+            oldWidget.item.nosCount != widget.item.nosCount)) {
+      _checkCartStatus();
     }
   }
 
   @override
   void dispose() {
-    cartListener?.cancel();
     caratController.dispose();
     nosController.dispose();
     qtyController.dispose();
@@ -107,6 +113,8 @@ class _ItemCardState extends State<ItemCard> {
         caratQty: caratQtyValue,
         caratNos: caratNosValue,
       );
+
+      await _controller.getItems();
     } catch (e) {
       print(e);
     }
@@ -241,12 +249,20 @@ class _ItemCardState extends State<ItemCard> {
   void _updateCaratManually(String value) {
     if (value.isEmpty) {
       caratCount.value = 0;
+      totalNos.value = 0;
+      nosController.text = '';
       _calculateAmount();
       return;
     }
 
     double carats = double.tryParse(value) ?? 0;
     caratCount.value = carats;
+
+    if (widget.item.caratNos > 0) {
+      totalNos.value = carats * widget.item.caratNos;
+      nosController.text = totalNos.value.toStringAsFixed(0);
+    }
+
     _calculateAmount();
     _saveCart();
   }
@@ -254,12 +270,20 @@ class _ItemCardState extends State<ItemCard> {
   void _updateNosManually(String value) {
     if (value.isEmpty) {
       totalNos.value = 0;
+      caratCount.value = 0;
+      caratController.text = '';
       _calculateAmount();
       return;
     }
 
     double nos = double.tryParse(value) ?? 0;
     totalNos.value = nos;
+
+    if (widget.item.caratNos > 0) {
+      caratCount.value = nos / widget.item.caratNos;
+      caratController.text = caratCount.value.toStringAsFixed(0);
+    }
+
     _calculateAmount();
     _saveCart();
   }
@@ -351,6 +375,7 @@ class _ItemCardState extends State<ItemCard> {
               ),
               _buildInfo('Rate', widget.item.rate.toString()),
               _buildInfo('PackQty', widget.item.packQty.toString()),
+
               _buildInfo('CaratNos', widget.item.caratNos.toString()),
               _buildInfo('CaratQty', widget.item.caratQty.toString()),
               _buildInfo('ItemPack', widget.item.itemPack.toString()),
@@ -420,14 +445,6 @@ class _ItemCardState extends State<ItemCard> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'Carats',
-                                      style: TextStyles.kRegularMontserrat(
-                                        fontSize: FontSizes.k12FontSize,
-                                        color: kColorDarkGrey,
-                                      ),
-                                    ),
-                                    AppSpaces.h4,
                                     AppTextFormField(
                                       controller: caratController,
                                       hintText: 'Carats',
@@ -454,14 +471,6 @@ class _ItemCardState extends State<ItemCard> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'Nos',
-                                      style: TextStyles.kRegularMontserrat(
-                                        fontSize: FontSizes.k12FontSize,
-                                        color: kColorDarkGrey,
-                                      ),
-                                    ),
-                                    AppSpaces.h4,
                                     AppTextFormField(
                                       controller: nosController,
                                       hintText: 'Nos',

@@ -13,6 +13,8 @@ class CartItemDm {
   final double packQty;
   final double fat;
   final double lr;
+  final int nosCount;
+  final double caratCount;
 
   CartItemDm({
     required this.date,
@@ -29,6 +31,8 @@ class CartItemDm {
     required this.packQty,
     required this.fat,
     required this.lr,
+    required this.nosCount,
+    required this.caratCount,
   });
 
   factory CartItemDm.fromJson(Map<String, dynamic> json) {
@@ -47,6 +51,8 @@ class CartItemDm {
       packQty: (json['PackQty'] ?? 0).toDouble(),
       fat: (json['Fat'] ?? 0).toDouble(),
       lr: (json['LR'] ?? 0).toDouble(),
+      nosCount: (json['NosCount'] ?? 0).toInt(),
+      caratCount: (json['CaratCount'] ?? 0).toDouble(),
     );
   }
 }

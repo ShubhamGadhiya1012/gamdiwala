@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/constants/image_constants.dart';
@@ -59,6 +57,8 @@ class HomeController extends GetxController {
         pCode: selectPCode.toString(),
       );
       itemList.assignAll(fetchedList);
+
+      await getCartItems();
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
     } finally {
@@ -334,6 +334,29 @@ class HomeController extends GetxController {
       );
 
       if (response != null && response['message'] != null) {
+        final itemIndex = itemList.indexWhere((i) => i.iCode == item.iCode);
+        if (itemIndex != -1) {
+          final updatedItem = ItemDm(
+            iCode: item.iCode,
+            iName: item.iName,
+            description: item.description,
+            unit: item.unit,
+            rate: item.rate,
+            hsnNo: item.hsnNo,
+            packQty: item.packQty,
+            caratNos: item.caratNos,
+            caratQty: item.caratQty,
+            itemPack: item.itemPack,
+            fat: item.fat,
+            lr: item.lr,
+            qty: qty,
+            caratCount: caratQty,
+            nosCount: caratNos.toInt(),
+          );
+          itemList[itemIndex] = updatedItem;
+          itemList.refresh();
+        }
+
         final index = cartItems.indexWhere((cart) => cart.iCode == item.iCode);
 
         if (qty == 0 && caratQty == 0 && caratNos == 0) {
@@ -357,6 +380,8 @@ class HomeController extends GetxController {
             packQty: item.packQty,
             fat: item.fat,
             lr: item.lr,
+            nosCount: caratNos.toInt(),
+            caratCount: caratQty,
           );
 
           if (index != -1) {
@@ -369,11 +394,25 @@ class HomeController extends GetxController {
 
         cartItems.refresh();
       }
+
+      cartCount.value = await _getCartCount();
     } catch (e) {
       print(e);
       showErrorSnackbar('Error', e.toString());
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<int> _getCartCount() async {
+    try {
+      String? selectPCode = await SecureStorageHelper.read('selectPCode');
+      final fetchedCartItems = await HomeRepo.getCartItems(
+        pCode: selectPCode ?? '',
+      );
+      return fetchedCartItems.length;
+    } catch (e) {
+      return 0;
     }
   }
 }

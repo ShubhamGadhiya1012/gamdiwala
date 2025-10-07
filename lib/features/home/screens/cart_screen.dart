@@ -81,13 +81,9 @@ class CartScreen extends StatelessWidget {
                     child: ListView.builder(
                       padding: AppPaddings.p10,
                       itemCount: _controller.cartItems.length,
+
                       itemBuilder: (context, index) {
                         final cartItem = _controller.cartItems[index];
-
-                        final originalItem = _controller.itemList
-                            .firstWhereOrNull(
-                              (item) => item.iCode == cartItem.iCode,
-                            );
 
                         final item = ItemDm(
                           iCode: cartItem.iCode,
@@ -95,13 +91,16 @@ class CartScreen extends StatelessWidget {
                           unit: '',
                           rate: cartItem.rate,
                           packQty: cartItem.packQty,
-                          caratNos: originalItem?.caratNos ?? 0,
-                          caratQty: originalItem?.caratQty ?? 0,
+                          caratNos: cartItem.caratNos,
+                          caratQty: cartItem.caratQty,
                           itemPack: cartItem.itemPack,
                           fat: cartItem.fat,
                           lr: cartItem.lr,
                           description: '',
                           hsnNo: '',
+                          qty: cartItem.qty,
+                          caratCount: cartItem.caratCount,
+                          nosCount: cartItem.nosCount,
                         );
 
                         return ItemCard(
