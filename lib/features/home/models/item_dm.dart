@@ -44,6 +44,5 @@ class ItemDm {
     );
   }
 
-  // Helper to check if item uses carat system
   bool get usesCaratSystem => caratNos > 0;
 }

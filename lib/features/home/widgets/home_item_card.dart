@@ -104,11 +104,9 @@ class _HomeItemCardState extends State<HomeItemCard> {
   void dispose() {
     _isDisposed = true;
     _cartWorker?.dispose();
-
     caratController.dispose();
     nosController.dispose();
     qtyController?.dispose();
-
     super.dispose();
   }
 
@@ -512,7 +510,9 @@ class _HomeItemCardState extends State<HomeItemCard> {
                   double enteredNos = double.tryParse(value) ?? 0;
                   if (enteredNos > 0) {
                     nosCount.value = enteredNos;
-                    caratCount.value = enteredNos / widget.item.caratNos;
+
+                    caratCount.value = (enteredNos / widget.item.caratNos)
+                        .ceilToDouble();
                     nosController.text = enteredNos.toStringAsFixed(0);
                     caratController.text = caratCount.value.toStringAsFixed(0);
                     _calculateAmount();
@@ -716,13 +716,16 @@ class _HomeItemCardState extends State<HomeItemCard> {
               fillColor: kColorWhite,
             ),
             onChanged: (value) {
-              if (value.isEmpty) {
-                qty.value = 0;
-              } else {
-                qty.value = double.tryParse(value) ?? 0;
+              double newQty = value.isEmpty ? 0 : (double.tryParse(value) ?? 0);
+
+              if (qty.value != newQty) {
+                qty.value = newQty;
+                _calculateAmount();
+
+                if (newQty > 0) {
+                  _addOrUpdateCart();
+                }
               }
-              _calculateAmount();
-              _addOrUpdateCart();
             },
           ),
         ),

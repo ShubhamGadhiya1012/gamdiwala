@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/constants/image_constants.dart';
 import 'package:gamdiwala/features/authentication/auth/screens/reset_password_screen.dart';
+import 'package:gamdiwala/features/authentication/auth/screens/select_party_screen.dart';
 import 'package:gamdiwala/features/profile/controllers/profile_controller.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
 import 'package:gamdiwala/styles/text_styles.dart';
@@ -225,9 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                   ),
                 ),
-
                 AppSpaces.v14,
-
                 _buildAnimatedMenuTile(
                   delay: 200,
                   iconPath: kIconResetPassword,
@@ -241,9 +240,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                     );
                   },
                 ),
-
                 AppSpaces.v14,
-
+                _buildAnimatedMenuTile(
+                  delay: 200,
+                  iconPath: kIconResetPassword,
+                  title: 'Change Party',
+                  onTap: () {
+                    Get.offAll(() => SelectPartyScreen());
+                  },
+                ),
+                AppSpaces.v14,
                 _buildAnimatedMenuTile(
                   delay: 300,
                   iconPath: kIconLogOut,

@@ -108,7 +108,10 @@ class _CartItemCardState extends State<CartItemCard> {
       nosController.text = nosCount.value.toStringAsFixed(0);
     }
     _calculateAmount();
-    _updateCart();
+
+    if (caratCount.value > 0) {
+      _updateCart();
+    }
   }
 
   void _updateNosManually(String value) {
@@ -116,14 +119,15 @@ class _CartItemCardState extends State<CartItemCard> {
       nosCount.value = 0;
       caratCount.value = 0;
       caratController.text = '';
+      _calculateAmount();
     } else {
       double nos = double.tryParse(value) ?? 0;
       nosCount.value = nos;
-      caratCount.value = nos / widget.cartItem.caratNos;
+      caratCount.value = (nos / widget.cartItem.caratNos).ceilToDouble();
       caratController.text = caratCount.value.toStringAsFixed(0);
+      _calculateAmount();
+      _updateCart();
     }
-    _calculateAmount();
-    _updateCart();
   }
 
   void _incrementQty() {
@@ -390,13 +394,16 @@ class _CartItemCardState extends State<CartItemCard> {
               fillColor: kColorWhite,
             ),
             onChanged: (value) {
-              if (value.isEmpty) {
-                qty.value = 0;
-              } else {
-                qty.value = double.tryParse(value) ?? 0;
+              double newQty = value.isEmpty ? 0 : (double.tryParse(value) ?? 0);
+
+              if (qty.value != newQty) {
+                qty.value = newQty;
+                _calculateAmount();
+
+                if (newQty > 0) {
+                  _updateCart();
+                }
               }
-              _calculateAmount();
-              _updateCart();
             },
           ),
         ),

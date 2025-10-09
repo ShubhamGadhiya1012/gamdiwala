@@ -171,7 +171,7 @@ class _AppDatePickerTextFormFieldState
     required double borderWidth,
   }) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(60),
       borderSide: BorderSide(color: borderColor, width: borderWidth),
     );
   }

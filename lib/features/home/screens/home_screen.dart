@@ -82,11 +82,7 @@ class HomeScreen extends StatelessWidget {
                         itemCount: _homeController.itemList.length,
                         itemBuilder: (context, index) {
                           final item = _homeController.itemList[index];
-                          return HomeItemCard(
-                            item: item,
-                            onTap:
-                                () {}, // Empty function, nullable is handled in HomeItemCard
-                          );
+                          return HomeItemCard(item: item, onTap: () {});
                         },
                       ),
                     );
@@ -147,6 +143,20 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
+          IconButton(
+            icon: Hero(
+              tag: "profile_icon",
+              child: SvgPicture.asset(
+                kIconProfile,
+                height: 24,
+                width: 24,
+                colorFilter: ColorFilter.mode(kColorPrimary, BlendMode.srcIn),
+              ),
+            ),
+            onPressed: () {
+              Get.to(() => ProfileScreen());
+            },
+          ),
           Obx(
             () => Stack(
               clipBehavior: Clip.none,
@@ -186,20 +196,6 @@ class HomeScreen extends StatelessWidget {
                   ),
               ],
             ),
-          ),
-          IconButton(
-            icon: Hero(
-              tag: "profile_icon",
-              child: SvgPicture.asset(
-                kIconProfile,
-                height: 24,
-                width: 24,
-                colorFilter: ColorFilter.mode(kColorPrimary, BlendMode.srcIn),
-              ),
-            ),
-            onPressed: () {
-              Get.to(() => ProfileScreen());
-            },
           ),
         ],
       ),

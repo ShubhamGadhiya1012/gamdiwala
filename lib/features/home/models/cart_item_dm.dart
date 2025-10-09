@@ -56,6 +56,5 @@ class CartItemDm {
     );
   }
 
-  // Helper to check if cart item uses carat system
   bool get usesCaratSystem => caratNos > 0;
 }
