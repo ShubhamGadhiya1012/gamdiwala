@@ -9,6 +9,7 @@ import 'package:gamdiwala/styles/text_styles.dart';
 import 'package:gamdiwala/utils/screen_utils/app_paddings.dart';
 import 'package:gamdiwala/utils/screen_utils/app_spacings.dart';
 import 'package:gamdiwala/widgets/app_card.dart';
+import 'package:gamdiwala/widgets/app_text_form_field.dart';
 import 'package:get/get.dart';
 
 class HomeItemCard extends StatefulWidget {
@@ -379,19 +380,10 @@ class _HomeItemCardState extends State<HomeItemCard> {
                       fontSize: FontSizes.k18FontSize,
                     ),
                   ),
-                  content: TextField(
+                  content: AppTextFormField(
                     controller: inputController,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'Enter Carat value',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
+                    hintText: 'Enter Carat value',
                   ),
                   actions: [
                     TextButton(
@@ -438,7 +430,7 @@ class _HomeItemCardState extends State<HomeItemCard> {
               foregroundColor: kColorWhite,
               padding: EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(60),
               ),
             ),
             child: Text(
@@ -466,19 +458,10 @@ class _HomeItemCardState extends State<HomeItemCard> {
                       fontSize: FontSizes.k18FontSize,
                     ),
                   ),
-                  content: TextField(
+                  content: AppTextFormField(
                     controller: inputController,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'Enter Nos value',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
+                    hintText: 'Enter Nos value',
                   ),
                   actions: [
                     TextButton(
@@ -527,7 +510,7 @@ class _HomeItemCardState extends State<HomeItemCard> {
               side: BorderSide(color: kColorPrimary),
               padding: EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(60),
               ),
             ),
             child: Text(
@@ -558,7 +541,7 @@ class _HomeItemCardState extends State<HomeItemCard> {
         foregroundColor: kColorWhite,
         padding: EdgeInsets.symmetric(vertical: 10),
         minimumSize: Size(double.infinity, 36),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(60)),
       ),
       child: Text(
         'Add to Cart',
@@ -581,39 +564,11 @@ class _HomeItemCardState extends State<HomeItemCard> {
       child: Row(
         children: [
           Expanded(
-            child: TextField(
+            child: AppTextFormField(
               controller: caratController,
               keyboardType: TextInputType.numberWithOptions(decimal: true),
-              style: TextStyles.kBoldMontserrat(
-                fontSize: FontSizes.k16FontSize,
-                color: kColorTextPrimary,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Carats',
-                hintStyle: TextStyles.kRegularMontserrat(
-                  fontSize: FontSizes.k14FontSize,
-                  color: kColorDarkGrey,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(color: Colors.grey.shade400),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(color: Colors.grey.shade400),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(color: kColorPrimary),
-                ),
-                contentPadding: AppPaddings.combined(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                filled: true,
-                fillColor: kColorWhite,
-              ),
               onChanged: _updateCaratManually,
+              hintText: 'Carat',
             ),
           ),
           Container(
@@ -623,39 +578,11 @@ class _HomeItemCardState extends State<HomeItemCard> {
             margin: AppPaddings.combined(horizontal: 12, vertical: 0),
           ),
           Expanded(
-            child: TextField(
+            child: AppTextFormField(
               controller: nosController,
               keyboardType: TextInputType.number,
-              style: TextStyles.kBoldMontserrat(
-                fontSize: FontSizes.k16FontSize,
-                color: kColorTextPrimary,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Nos',
-                hintStyle: TextStyles.kRegularMontserrat(
-                  fontSize: FontSizes.k14FontSize,
-                  color: kColorDarkGrey,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(color: Colors.grey.shade400),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(color: Colors.grey.shade400),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(color: kColorPrimary),
-                ),
-                contentPadding: AppPaddings.combined(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                filled: true,
-                fillColor: kColorWhite,
-              ),
               onChanged: _updateNosManually,
+              hintText: 'Nos',
             ),
           ),
         ],

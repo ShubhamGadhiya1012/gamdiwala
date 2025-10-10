@@ -271,6 +271,7 @@ class CartController extends GetxController {
         selectedDriverCode.value = '';
         selectedVehicleDisplayName.value = '';
         selectedVehicleCode.value = '';
+        orderDateController.clear();
 
         showSuccessSnackbar('Success', response['message']);
 

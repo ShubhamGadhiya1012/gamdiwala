@@ -50,7 +50,7 @@ class CartRepo {
       "Fat": fat,
       "LR": lr,
     };
-
+    print(requestBody);
     try {
       final response = await ApiService.postRequest(
         endpoint: '/Cart/addToCart',
@@ -122,7 +122,7 @@ class CartRepo {
 
     final requestBody = {
       "PCode": pCode,
-      "OrderDate": orderDate,
+      "Date": orderDate,
       "DCode": dCode,
       "VCode": vCode,
       "Remark": remark ?? "",

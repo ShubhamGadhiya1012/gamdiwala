@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/constants/image_constants.dart';
 import 'package:gamdiwala/features/authentication/auth/screens/auth_screen.dart';
+import 'package:gamdiwala/features/challan_entry/screens/challan_entry_screens.dart';
 import 'package:gamdiwala/features/home/models/home_menu_item_dm.dart';
 import 'package:gamdiwala/features/home/models/item_dm.dart';
 import 'package:gamdiwala/features/home/repos/home_repo.dart';
@@ -217,6 +218,18 @@ class HomeController extends GetxController {
   void buildMenuItems() {
     menuItems.value = [
       HomeMenuItemDm(
+        menuName: 'Order',
+        icon: kIconUserManagement,
+        onTap: () {},
+      ),
+      HomeMenuItemDm(
+        menuName: 'Challan',
+        icon: kIconUserManagement,
+        onTap: () {
+          Get.to(() => ChallanEntryScreen());
+        },
+      ),
+      HomeMenuItemDm(
         menuName: 'User Settings',
         icon: kIconUserSettings,
         subMenus: [
@@ -242,16 +255,6 @@ class HomeController extends GetxController {
             },
           ),
         ],
-      ),
-      HomeMenuItemDm(
-        menuName: 'Ledger',
-        icon: kIconUserManagement,
-        onTap: () {},
-      ),
-      HomeMenuItemDm(
-        menuName: 'Invoice',
-        icon: kIconUserManagement,
-        onTap: () {},
       ),
     ];
   }

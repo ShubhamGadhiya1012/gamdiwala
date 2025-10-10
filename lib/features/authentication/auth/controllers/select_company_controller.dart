@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/features/authentication/auth/models/year_dm.dart';
 import 'package:gamdiwala/features/authentication/auth/repos/select_company_repo.dart';
-import 'package:gamdiwala/features/home/screens/home_screen.dart';
+import 'package:gamdiwala/features/authentication/auth/screens/select_party_screen.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
 import 'package:gamdiwala/utils/helpers/secure_storage_helper.dart';
 import 'package:get/get.dart';
@@ -89,7 +89,7 @@ class SelectCompanyController extends GetxController {
         selectedCoCode.value.toString(),
       );
 
-      Get.offAll(() => HomeScreen());
+      Get.offAll(() => SelectPartyScreen());
     } catch (e) {
       if (e is Map<String, dynamic>) {
         showErrorSnackbar('Error', e['message']);
