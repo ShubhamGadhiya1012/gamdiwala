@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/features/challan_entry/models/order_dm.dart';
 import 'package:gamdiwala/features/challan_entry/repos/challan_entry_repo.dart';
+import 'package:gamdiwala/features/challan_entry/screens/challan_pdf_screen.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -105,13 +106,25 @@ class ChallanController extends GetxController {
     }
   }
 
-  Future<void> downloadChallanPdf(String invNo) async {
+  Future<void> generateChallanPdf(String challanNo) async {
     isLoading.value = true;
     try {
-      await ChallanRepo.downloadChallanPdf(invNo: invNo);
-      showSuccessSnackbar('Success', 'PDF downloaded successfully');
+      final response = await ChallanRepo.getChallanPdfData(
+        challanNo: challanNo,
+      );
+
+      if (response != null &&
+          response['data'] != null &&
+          response['data'].isNotEmpty) {
+        await ChallanPdfScreen.generateChallanPdf(
+          challanData: response['data'][0],
+        );
+      } else {
+        showErrorSnackbar('Error', 'No data found for PDF generation');
+      }
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
+      print(e);
     } finally {
       isLoading.value = false;
     }

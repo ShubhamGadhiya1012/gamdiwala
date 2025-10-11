@@ -49,16 +49,19 @@ class ChallanRepo {
     }
   }
 
-  static Future<void> downloadChallanPdf({required String invNo}) async {
+  static Future<Map<String, dynamic>?> getChallanPdfData({
+    required String challanNo,
+  }) async {
     String? token = await SecureStorageHelper.read('token');
 
     try {
       final response = await ApiService.getRequest(
-        endpoint: '/Challan/downloadPdf',
+        endpoint: '/Challan/generatePdf',
         token: token,
-        queryParams: {'InvNo': invNo},
+        queryParams: {'Invno': challanNo},
       );
 
+      print(response);
       return response;
     } catch (e) {
       rethrow;

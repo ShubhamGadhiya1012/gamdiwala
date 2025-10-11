@@ -45,6 +45,9 @@ dependencies:
   lottie: ^3.3.1
   flutter_svg: ^2.2.1
   url_launcher: ^6.3.2
+  open_filex: ^4.7.0
+  pdf: ^3.11.3
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:

@@ -3,6 +3,7 @@ class ChallanOrderDm {
   final String pCode;
   final String pName;
   final String vCode;
+  final String challanNo;
   final List<ChallanOrderItemDm> orderItems;
 
   ChallanOrderDm({
@@ -10,6 +11,7 @@ class ChallanOrderDm {
     required this.pCode,
     required this.pName,
     required this.vCode,
+    required this.challanNo,
     required this.orderItems,
   });
 
@@ -19,6 +21,7 @@ class ChallanOrderDm {
       pCode: json['pCode'] ?? '',
       pName: json['pName'] ?? '',
       vCode: json['vCode'] ?? '',
+      challanNo: json['challanNo'] ?? '',
       orderItems:
           (json['orderItems'] as List?)
               ?.map((item) => ChallanOrderItemDm.fromJson(item))

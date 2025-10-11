@@ -264,7 +264,7 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen>
               onTap: () {},
               onPdfDownload: !isPending
                   ? () {
-                      _controller.downloadChallanPdf(order.invNo);
+                      _controller.generateChallanPdf(order.challanNo);
                     }
                   : null,
             );

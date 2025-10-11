@@ -37,6 +37,41 @@ class HomeScreen extends StatelessWidget {
                 child: Container(
                   color: Colors.grey[50],
                   child: Obx(() {
+                    final hasOrderAccess = _homeController.menuAccess.any(
+                      (menu) => menu.menuName == 'Order' && menu.access,
+                    );
+
+                    if (!hasOrderAccess) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.lock_outline,
+                              size: 80,
+                              color: kColorDarkGrey.withOpacity(0.3),
+                            ),
+                            AppSpaces.h24,
+                            Text(
+                              'No Access',
+                              style: TextStyles.kBoldMontserrat(
+                                fontSize: FontSizes.k24FontSize,
+                                color: kColorTextPrimary,
+                              ),
+                            ),
+                            AppSpaces.h12,
+                            Text(
+                              'Contact your administrator',
+                              style: TextStyles.kRegularMontserrat(
+                                fontSize: FontSizes.k16FontSize,
+                                color: kColorDarkGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
                     if (_homeController.itemList.isEmpty &&
                         !_homeController.isLoading.value) {
                       return Center(
