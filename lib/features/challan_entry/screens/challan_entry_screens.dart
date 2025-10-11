@@ -19,10 +19,43 @@ class ChallanEntryScreen extends StatefulWidget {
   State<ChallanEntryScreen> createState() => _ChallanEntryScreenState();
 }
 
-class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
+class _ChallanEntryScreenState extends State<ChallanEntryScreen>
+    with SingleTickerProviderStateMixin {
   final ChallanController _controller = Get.put(ChallanController());
   String? _expandedCardKey;
   String? _selectedCardKey;
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _controller.loadTodayOrders();
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (!_tabController.indexIsChanging) {
+      setState(() {
+        _expandedCardKey = null;
+        _selectedCardKey = null;
+      });
+
+      _controller.loadOrdersByStatus(
+        _tabController.index == 0 ? 'PENDING' : 'COMPLETE',
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,11 +92,21 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
           ),
           body: Column(
             children: [
-              _buildSearchSection(),
-              Expanded(child: _buildOrdersList()),
+              _buildDatePickerSection(),
+              _buildTabBar(),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildOrdersList(isPending: true),
+                    _buildOrdersList(isPending: false),
+                  ],
+                ),
+              ),
             ],
           ),
-          floatingActionButton: _selectedCardKey != null
+          floatingActionButton:
+              _selectedCardKey != null && _tabController.index == 0
               ? FloatingActionButton.extended(
                   onPressed: _showChallanDateDialog,
                   label: Text('Challan Entry'),
@@ -78,10 +121,11 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
     );
   }
 
-  Widget _buildSearchSection() {
+  Widget _buildDatePickerSection() {
     return Container(
       padding: AppPaddings.p16,
       decoration: BoxDecoration(
+        color: kColorWhite,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -90,77 +134,60 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
           ),
         ],
       ),
-      child: Form(
-        key: _controller.formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppDatePickerTextFormField(
-              dateController: _controller.orderDateController,
-              hintText: 'Select Order Date',
-              validator: (value) =>
-                  value?.isEmpty ?? true ? 'Please select date' : null,
-            ),
-            AppSpaces.v16,
-            AppButton(
-              onPressed: () {
-                if (_controller.formKey.currentState!.validate()) {
-                  _controller.searchOrders();
-                  setState(() {
-                    _expandedCardKey = null;
-                    _selectedCardKey = null;
-                  });
-                }
-              },
-              title: 'Search Orders',
-              titleSize: 16,
-            ),
-          ],
-        ),
+      child: AppDatePickerTextFormField(
+        dateController: _controller.orderDateController,
+        hintText: 'Order Date',
+        onChanged: (date) {
+          if (date.isNotEmpty) {
+            setState(() {
+              _expandedCardKey = null;
+              _selectedCardKey = null;
+            });
+            _controller.searchOrders();
+          }
+        },
       ),
     );
   }
 
-  Widget _buildOrdersList() {
-    return Obx(() {
-      if (_controller.challanOrders.isEmpty &&
-          !_controller.isLoading.value &&
-          _controller.orderDateController.text.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.search,
-                size: 80,
-                color: kColorDarkGrey.withOpacity(0.3),
-              ),
-              AppSpaces.h24,
-              Text(
-                'Search Orders',
-                style: TextStyles.kBoldMontserrat(
-                  fontSize: FontSizes.k24FontSize,
-                  color: kColorTextPrimary,
-                ),
-              ),
-              AppSpaces.h12,
-              Padding(
-                padding: AppPaddings.p20,
-                child: Text(
-                  'Select a date and click "Search Orders" to view available orders',
-                  style: TextStyles.kRegularMontserrat(
-                    fontSize: FontSizes.k16FontSize,
-                    color: kColorDarkGrey,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
+  Widget _buildTabBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: kColorWhite,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
-        );
-      }
+        ],
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicatorColor: kColorPrimary,
+        labelColor: kColorPrimary,
+        unselectedLabelColor: kColorDarkGrey,
+        labelStyle: TextStyles.kSemiBoldMontserrat(
+          fontSize: FontSizes.k14FontSize,
+        ),
+        unselectedLabelStyle: TextStyles.kMediumMontserrat(
+          fontSize: FontSizes.k14FontSize,
+        ),
+        tabs: const [
+          Tab(text: 'Pending Challan'),
+          Tab(text: 'Completed Challan'),
+        ],
+      ),
+    );
+  }
 
-      if (_controller.challanOrders.isEmpty && !_controller.isLoading.value) {
+  Widget _buildOrdersList({required bool isPending}) {
+    return Obx(() {
+      final orders = isPending
+          ? _controller.pendingOrders
+          : _controller.completedOrders;
+
+      if (orders.isEmpty && !_controller.isLoading.value) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -180,7 +207,9 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
               ),
               AppSpaces.h12,
               Text(
-                'No orders available for selected date',
+                isPending
+                    ? 'No pending orders for selected date'
+                    : 'No completed orders for selected date',
                 style: TextStyles.kRegularMontserrat(
                   fontSize: FontSizes.k16FontSize,
                   color: kColorDarkGrey,
@@ -196,7 +225,9 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
         color: kColorPrimary,
         strokeWidth: 2.5,
         onRefresh: () async {
-          await _controller.searchOrders();
+          await _controller.loadOrdersByStatus(
+            isPending ? 'PENDING' : 'COMPLETE',
+          );
           setState(() {
             _expandedCardKey = null;
             _selectedCardKey = null;
@@ -204,9 +235,9 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
         },
         child: ListView.builder(
           padding: AppPaddings.p10,
-          itemCount: _controller.challanOrders.length,
+          itemCount: orders.length,
           itemBuilder: (context, index) {
-            final order = _controller.challanOrders[index];
+            final order = orders[index];
             final isSelected = _selectedCardKey == order.invNo;
 
             return ChallanOrderCard(
@@ -214,18 +245,28 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
               order: order,
               expandedCardKey: _expandedCardKey,
               isSelected: isSelected,
+              isPending: isPending,
               onExpanded: (String? cardKey) {
                 setState(() {
                   _expandedCardKey = cardKey;
                 });
               },
-              onLongPress: () {
-                _handleCardSelection(order.invNo);
-              },
-              onSelectionToggle: () {
-                _handleCardSelection(order.invNo);
-              },
+              onLongPress: isPending
+                  ? () {
+                      _handleCardSelection(order.invNo);
+                    }
+                  : null,
+              onSelectionToggle: isPending
+                  ? () {
+                      _handleCardSelection(order.invNo);
+                    }
+                  : null,
               onTap: () {},
+              onPdfDownload: !isPending
+                  ? () {
+                      _controller.downloadChallanPdf(order.invNo);
+                    }
+                  : null,
             );
           },
         ),
@@ -278,7 +319,7 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
                 AppSpaces.v20,
                 AppDatePickerTextFormField(
                   dateController: _controller.challanDateController,
-                  hintText: 'Select Challan Date',
+                  hintText: 'Challan Date',
                   validator: (value) => value?.isEmpty ?? true
                       ? 'Please select challan date'
                       : null,
@@ -296,8 +337,7 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
                             );
                             if (success) {
                               setState(() {
-                                _selectedCardKey =
-                                    null; // ✅ Only clear on success
+                                _selectedCardKey = null;
                               });
                             }
                           }

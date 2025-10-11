@@ -6,6 +6,7 @@ import 'package:gamdiwala/features/challan_entry/screens/challan_entry_screens.d
 import 'package:gamdiwala/features/home/models/home_menu_item_dm.dart';
 import 'package:gamdiwala/features/home/models/item_dm.dart';
 import 'package:gamdiwala/features/home/repos/home_repo.dart';
+import 'package:gamdiwala/features/home/screens/home_screen.dart';
 import 'package:gamdiwala/features/user_settings/models/user_access_dm.dart';
 import 'package:gamdiwala/features/user_settings/repos/user_access_repo.dart';
 import 'package:gamdiwala/features/user_settings/screens/unauth_users_screen.dart';
@@ -220,7 +221,9 @@ class HomeController extends GetxController {
       HomeMenuItemDm(
         menuName: 'Order',
         icon: kIconUserManagement,
-        onTap: () {},
+        onTap: () {
+          Get.to(() => HomeScreen());
+        },
       ),
       HomeMenuItemDm(
         menuName: 'Challan',

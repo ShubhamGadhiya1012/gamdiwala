@@ -15,6 +15,8 @@ class ChallanOrderCard extends StatefulWidget {
   final bool isSelected;
   final VoidCallback? onLongPress;
   final VoidCallback? onSelectionToggle;
+  final bool isPending;
+  final VoidCallback? onPdfDownload;
 
   const ChallanOrderCard({
     super.key,
@@ -25,7 +27,10 @@ class ChallanOrderCard extends StatefulWidget {
     this.isSelected = false,
     this.onLongPress,
     this.onSelectionToggle,
+    this.isPending = true,
+    this.onPdfDownload,
   });
+
   @override
   State<ChallanOrderCard> createState() => _ChallanOrderCardState();
 }
@@ -74,29 +79,32 @@ class _ChallanOrderCardState extends State<ChallanOrderCard> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: widget.onSelectionToggle,
-            child: Padding(
-              padding: AppPaddings.custom(right: 12),
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: widget.isSelected ? kColorPrimary : Colors.transparent,
-                  border: Border.all(
+          if (widget.isPending)
+            GestureDetector(
+              onTap: widget.onSelectionToggle,
+              child: Padding(
+                padding: AppPaddings.custom(right: 12),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
                     color: widget.isSelected
                         ? kColorPrimary
-                        : Colors.grey.shade300,
-                    width: 2,
+                        : Colors.transparent,
+                    border: Border.all(
+                      color: widget.isSelected
+                          ? kColorPrimary
+                          : Colors.grey.shade300,
+                      width: 2,
+                    ),
                   ),
+                  child: widget.isSelected
+                      ? Icon(Icons.check, size: 16, color: Colors.white)
+                      : null,
                 ),
-                child: widget.isSelected
-                    ? Icon(Icons.check, size: 16, color: Colors.white)
-                    : null,
               ),
             ),
-          ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,20 +132,43 @@ class _ChallanOrderCardState extends State<ChallanOrderCard> {
           AppSpaces.h12,
           Column(
             children: [
-              Container(
-                padding: AppPaddings.combined(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: kColorPrimary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: kColorPrimary.withOpacity(0.3)),
-                ),
-                child: Text(
-                  '${widget.order.orderItems.length} Items',
-                  style: TextStyles.kSemiBoldMontserrat(
-                    fontSize: FontSizes.k12FontSize,
-                    color: kColorPrimary,
+              Row(
+                children: [
+                  Container(
+                    padding: AppPaddings.combined(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: kColorPrimary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: kColorPrimary.withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      '${widget.order.orderItems.length} Items',
+                      style: TextStyles.kSemiBoldMontserrat(
+                        fontSize: FontSizes.k12FontSize,
+                        color: kColorPrimary,
+                      ),
+                    ),
                   ),
-                ),
+                  if (!widget.isPending) ...[
+                    AppSpaces.h8,
+                    GestureDetector(
+                      onTap: widget.onPdfDownload,
+                      child: Container(
+                        padding: AppPaddings.p8,
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade300),
+                        ),
+                        child: Icon(
+                          Icons.picture_as_pdf,
+                          color: Colors.red.shade700,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               AppSpaces.v8,
               AnimatedRotation(

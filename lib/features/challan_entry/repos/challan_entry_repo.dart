@@ -3,13 +3,16 @@ import 'package:gamdiwala/services/api_service.dart';
 import 'package:gamdiwala/utils/helpers/secure_storage_helper.dart';
 
 class ChallanRepo {
-  static Future<List<ChallanOrderDm>> getOrders({required String date}) async {
+  static Future<List<ChallanOrderDm>> getOrders({
+    required String date,
+    required String status,
+  }) async {
     String? token = await SecureStorageHelper.read('token');
 
     final response = await ApiService.getRequest(
       endpoint: '/Challan/getOrders',
       token: token,
-      queryParams: {'Date': date},
+      queryParams: {'Date': date, 'Status': status},
     );
 
     if (response == null || response['data'] == null) return [];
@@ -40,6 +43,22 @@ class ChallanRepo {
         token: token,
         requestBody: body,
       );
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  static Future<void> downloadChallanPdf({required String invNo}) async {
+    String? token = await SecureStorageHelper.read('token');
+
+    try {
+      final response = await ApiService.getRequest(
+        endpoint: '/Challan/downloadPdf',
+        token: token,
+        queryParams: {'InvNo': invNo},
+      );
+
       return response;
     } catch (e) {
       rethrow;

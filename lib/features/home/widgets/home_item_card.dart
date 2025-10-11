@@ -8,6 +8,7 @@ import 'package:gamdiwala/styles/font_sizes.dart';
 import 'package:gamdiwala/styles/text_styles.dart';
 import 'package:gamdiwala/utils/screen_utils/app_paddings.dart';
 import 'package:gamdiwala/utils/screen_utils/app_spacings.dart';
+import 'package:gamdiwala/widgets/app_button.dart';
 import 'package:gamdiwala/widgets/app_card.dart';
 import 'package:gamdiwala/widgets/app_text_form_field.dart';
 import 'package:get/get.dart';
@@ -35,7 +36,7 @@ class _HomeItemCardState extends State<HomeItemCard> {
   var nosCount = 0.0.obs;
   var qty = 0.0.obs;
   var totalAmount = 0.0.obs;
-
+  var isNosManuallySet = false.obs;
   @override
   void initState() {
     super.initState();
@@ -85,6 +86,7 @@ class _HomeItemCardState extends State<HomeItemCard> {
       if (widget.item.usesCaratSystem) {
         caratCount.value = 0;
         nosCount.value = 0;
+        isNosManuallySet.value = false;
         if (mounted) {
           caratController.clear();
           nosController.clear();
@@ -200,17 +202,13 @@ class _HomeItemCardState extends State<HomeItemCard> {
   void _updateCaratManually(String value) {
     if (value.isEmpty) {
       caratCount.value = 0;
-      nosCount.value = 0;
-      nosController.text = '';
     } else {
       double carats = double.tryParse(value) ?? 0;
-      caratCount.value = carats;
-      nosCount.value = carats * widget.item.caratNos;
+      if (carats > 0) {
+        caratCount.value = carats;
 
-      if (nosController.text != nosCount.value.toStringAsFixed(0)) {
-        nosController.text = nosCount.value.toStringAsFixed(0);
+        _addOrUpdateCart();
       }
-      _addOrUpdateCart();
     }
     _calculateAmount();
   }
@@ -218,17 +216,19 @@ class _HomeItemCardState extends State<HomeItemCard> {
   void _updateNosManually(String value) {
     if (value.isEmpty) {
       nosCount.value = 0;
-      caratCount.value = 0;
-      caratController.text = '';
+      isNosManuallySet.value = false;
     } else {
       double nos = double.tryParse(value) ?? 0;
-      nosCount.value = nos;
-      caratCount.value = nos / widget.item.caratNos;
+      if (nos > 0) {
+        nosCount.value = nos;
+        isNosManuallySet.value = true;
+        caratCount.value = nos / widget.item.caratNos;
 
-      if (caratController.text != caratCount.value.toStringAsFixed(0)) {
-        caratController.text = caratCount.value.toStringAsFixed(0);
+        if (caratController.text != caratCount.value.toStringAsFixed(0)) {
+          caratController.text = caratCount.value.toStringAsFixed(0);
+        }
+        _addOrUpdateCart();
       }
-      _addOrUpdateCart();
     }
     _calculateAmount();
   }
@@ -289,6 +289,7 @@ class _HomeItemCardState extends State<HomeItemCard> {
               if (widget.item.usesCaratSystem) {
                 caratCount.value = 0;
                 nosCount.value = 0;
+                isNosManuallySet.value = false;
                 caratController.text = '';
                 nosController.text = '';
               } else {
@@ -386,27 +387,30 @@ class _HomeItemCardState extends State<HomeItemCard> {
                     hintText: 'Enter Carat value',
                   ),
                   actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyles.kMediumMontserrat(
-                          fontSize: FontSizes.k14FontSize,
-                          color: kColorDarkGrey,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Get.back(),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyles.kMediumMontserrat(
+                                fontSize: FontSizes.k14FontSize,
+                                color: kColorDarkGrey,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Get.back(result: inputController.text.trim());
-                      },
-                      child: Text(
-                        'Add',
-                        style: TextStyles.kMediumMontserrat(
-                          fontSize: FontSizes.k14FontSize,
-                          color: kColorPrimary,
+                        Expanded(
+                          child: AppButton(
+                            onPressed: () {
+                              Get.back(result: inputController.text.trim());
+                            },
+                            title: 'Add',
+                            titleSize: 14,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -415,6 +419,7 @@ class _HomeItemCardState extends State<HomeItemCard> {
                   double enteredCarat = double.tryParse(value) ?? 0;
                   if (enteredCarat > 0) {
                     caratCount.value = enteredCarat;
+                    isNosManuallySet.value = false;
                     nosCount.value = enteredCarat * widget.item.caratNos;
                     caratController.text = enteredCarat.toStringAsFixed(0);
                     nosController.text = nosCount.value.toStringAsFixed(0);
@@ -464,27 +469,30 @@ class _HomeItemCardState extends State<HomeItemCard> {
                     hintText: 'Enter Nos value',
                   ),
                   actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyles.kMediumMontserrat(
-                          fontSize: FontSizes.k14FontSize,
-                          color: kColorDarkGrey,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Get.back(),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyles.kMediumMontserrat(
+                                fontSize: FontSizes.k14FontSize,
+                                color: kColorDarkGrey,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Get.back(result: inputController.text.trim());
-                      },
-                      child: Text(
-                        'Add',
-                        style: TextStyles.kMediumMontserrat(
-                          fontSize: FontSizes.k14FontSize,
-                          color: kColorPrimary,
+                        Expanded(
+                          child: AppButton(
+                            onPressed: () {
+                              Get.back(result: inputController.text.trim());
+                            },
+                            titleSize: 14,
+                            title: 'Add',
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -493,6 +501,7 @@ class _HomeItemCardState extends State<HomeItemCard> {
                   double enteredNos = double.tryParse(value) ?? 0;
                   if (enteredNos > 0) {
                     nosCount.value = enteredNos;
+                    isNosManuallySet.value = true;
 
                     caratCount.value = (enteredNos / widget.item.caratNos)
                         .ceilToDouble();

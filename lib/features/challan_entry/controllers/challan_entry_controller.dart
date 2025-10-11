@@ -11,7 +11,15 @@ class ChallanController extends GetxController {
   final challanDateFormKey = GlobalKey<FormState>();
   var orderDateController = TextEditingController();
   var challanDateController = TextEditingController();
-  var challanOrders = <ChallanOrderDm>[].obs;
+  var pendingOrders = <ChallanOrderDm>[].obs;
+  var completedOrders = <ChallanOrderDm>[].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    orderDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  }
 
   @override
   void onClose() {
@@ -20,22 +28,39 @@ class ChallanController extends GetxController {
     super.onClose();
   }
 
+  void loadTodayOrders() {
+    searchOrders();
+  }
+
   Future<void> searchOrders() async {
+    await loadOrdersByStatus('PENDING');
+  }
+
+  Future<void> loadOrdersByStatus(String status) async {
     isLoading.value = true;
     try {
       final orderDate = DateFormat(
         'yyyy-MM-dd',
       ).format(DateFormat('dd-MM-yyyy').parse(orderDateController.text));
 
-      final fetchedOrders = await ChallanRepo.getOrders(date: orderDate);
+      final fetchedOrders = await ChallanRepo.getOrders(
+        date: orderDate,
+        status: status,
+      );
 
-      challanOrders.assignAll(fetchedOrders);
-
-      if (fetchedOrders.isEmpty) {
-        showErrorSnackbar('No Orders', 'No orders found for selected date');
+      if (status == 'PENDING') {
+        pendingOrders.assignAll(fetchedOrders);
+      } else {
+        completedOrders.assignAll(fetchedOrders);
       }
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
+
+      if (status == 'PENDING') {
+        pendingOrders.clear();
+      } else {
+        completedOrders.clear();
+      }
     } finally {
       isLoading.value = false;
     }
@@ -46,7 +71,7 @@ class ChallanController extends GetxController {
 
     isLoading.value = true;
     try {
-      final selectedOrder = challanOrders.firstWhere(
+      final selectedOrder = pendingOrders.firstWhere(
         (order) => order.invNo == selectedInvNo,
       );
 
@@ -67,7 +92,8 @@ class ChallanController extends GetxController {
         challanDateController.clear();
 
         showSuccessSnackbar('Success', message);
-        await searchOrders();
+
+        await loadOrdersByStatus('PENDING');
         return true;
       }
       return false;
@@ -79,8 +105,21 @@ class ChallanController extends GetxController {
     }
   }
 
+  Future<void> downloadChallanPdf(String invNo) async {
+    isLoading.value = true;
+    try {
+      await ChallanRepo.downloadChallanPdf(invNo: invNo);
+      showSuccessSnackbar('Success', 'PDF downloaded successfully');
+    } catch (e) {
+      showErrorSnackbar('Error', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   void clearSearch() {
     orderDateController.clear();
-    challanOrders.clear();
+    pendingOrders.clear();
+    completedOrders.clear();
   }
 }
