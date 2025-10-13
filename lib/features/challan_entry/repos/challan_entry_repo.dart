@@ -36,7 +36,7 @@ class ChallanRepo {
       'PCode': pCode,
       'VCode': vCode,
     };
-    print(body);
+    // print(body);
     try {
       final response = await ApiService.postRequest(
         endpoint: '/Challan/challanEntry',
@@ -61,7 +61,7 @@ class ChallanRepo {
         queryParams: {'Invno': challanNo},
       );
 
-      print(response);
+      // print(response);
       return response;
     } catch (e) {
       rethrow;

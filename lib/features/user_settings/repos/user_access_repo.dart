@@ -16,7 +16,7 @@ class UserAccessRepo {
       if (response == null) {
         return UserAccessDm(menuAccess: [], ledgerDate: []);
       }
-      print(response);
+      // print(response);
       return UserAccessDm.fromJson(response);
     } catch (e) {
       rethrow;

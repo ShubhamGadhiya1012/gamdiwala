@@ -14,13 +14,13 @@ class AuthRepo {
       'FCMToken': fcmToken,
       'DeviceID': deviceId,
     };
-    print(requestBody);
+    // print(requestBody);
     try {
       var response = await ApiService.postRequest(
         endpoint: '/Auth/login',
         requestBody: requestBody,
       );
-      print(response);
+      // print(response);
       if (response != null && response['company'] != null) {
         return (response['company'] as List<dynamic>)
             .map((companyJson) => CompanyDm.fromJson(companyJson))

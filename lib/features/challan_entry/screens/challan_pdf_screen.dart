@@ -33,7 +33,7 @@ class ChallanPdfScreen {
       await _savePdf(pdf, data.challanNo);
     } catch (e) {
       showErrorSnackbar('Error', 'Failed to generate Challan PDF: $e');
-      print(e);
+      // print(e);
     }
   }
 
@@ -565,7 +565,7 @@ class ChallanPdfScreen {
       result += convertTwoDigit(intAmount);
     }
 
-    return result.trim() + ' Only';
+    return '${result.trim()} Only';
   }
 
   static Future<void> _savePdf(pw.Document pdf, String challanNo) async {

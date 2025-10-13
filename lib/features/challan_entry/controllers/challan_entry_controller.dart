@@ -124,7 +124,7 @@ class ChallanController extends GetxController {
       }
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
-      print(e);
+      // print(e);
     } finally {
       isLoading.value = false;
     }
