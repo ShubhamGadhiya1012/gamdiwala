@@ -13,12 +13,12 @@ Future<void> generateChallanReportPDF(
   String reportType,
 ) async {
   final pdf = pw.Document();
+  final primaryColor = PdfColor.fromHex('#138DB6');
 
-  final primaryColor = PdfColor.fromHex('#007BFF');
   final blackColor = PdfColor.fromHex('#000000');
   final contrastNavy = PdfColor.fromHex('#1E3A8A');
   final lightGray = PdfColor.fromHex('#F8F9FA');
-  final headerColor = PdfColor.fromHex('#4A90E2');
+  final headerColor = PdfColor.fromHex('#138DB6');
   final totalRowColor = PdfColor.fromHex('#B2F2C2');
 
   late Map<String, List<ChallanReportDm>> groupedData;
@@ -118,7 +118,7 @@ Map<String, List<ChallanReportDm>> _groupDataByItem(
 }
 
 pw.Widget _buildHeader(String fromDate, String toDate, String reportType) {
-  final primaryColor = PdfColor.fromHex('#007BFF');
+  final primaryColor = PdfColor.fromHex('#138DB6');
   final formattedDateTime = DateFormat(
     'dd MMM yyyy, hh:mm a',
   ).format(DateTime.now());
@@ -195,7 +195,6 @@ List<pw.Widget> _buildContent(
   List<pw.Widget> content = [];
 
   groupedData.forEach((groupKey, items) {
-    // Add group heading outside table
     String groupLabel;
     if (reportType == 'Date Wise') {
       groupLabel = 'Date: $groupKey';
@@ -224,7 +223,6 @@ List<pw.Widget> _buildContent(
       ),
     );
 
-    // Add table with header and data
     content.add(
       _buildGroupTable(
         items,
@@ -240,7 +238,6 @@ List<pw.Widget> _buildContent(
     content.add(pw.SizedBox(height: 4));
   });
 
-  // Add grand total
   final grandTotal = groupedData.values
       .expand((items) => items)
       .fold<double>(0, (sum, item) => sum + item.amount);
@@ -292,7 +289,6 @@ pw.Widget _buildGroupTable(
   final borderColor = PdfColor.fromHex('#D1D5DB');
   List<pw.TableRow> tableRows = [];
 
-  // Determine headers and column widths based on report type
   List<String> headers;
   Map<int, pw.TableColumnWidth> columnWidths;
 
@@ -361,7 +357,6 @@ pw.Widget _buildGroupTable(
     };
   }
 
-  // Add header row
   tableRows.add(
     pw.TableRow(
       decoration: pw.BoxDecoration(color: contrastNavy),
@@ -383,7 +378,6 @@ pw.Widget _buildGroupTable(
     ),
   );
 
-  // Add data rows
   double groupTotal = 0;
   for (int i = 0; i < items.length; i++) {
     final item = items[i];
@@ -436,7 +430,6 @@ pw.Widget _buildGroupTable(
     );
   }
 
-  // Add group total row
   List<pw.Widget> totalCells = List.generate(
     headers.length - 1,
     (index) => pw.Container(
