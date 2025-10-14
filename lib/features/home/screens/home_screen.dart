@@ -275,8 +275,8 @@ class HomeScreen extends StatelessWidget {
                       tag: "profile_icon",
                       child: SvgPicture.asset(
                         kIconProfile,
-                        height: 36,
-                        width: 36,
+                        height: 40,
+                        width: 40,
                         colorFilter: ColorFilter.mode(
                           kColorWhite,
                           BlendMode.srcIn,
