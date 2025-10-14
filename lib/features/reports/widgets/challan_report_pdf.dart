@@ -268,6 +268,7 @@ List<pw.Widget> _buildContent(
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.white,
             ),
+            textAlign: pw.TextAlign.right,
           ),
         ],
       ),
@@ -393,8 +394,17 @@ pw.Widget _buildGroupTable(
         _buildCell(item.nos.toString(), blackColor),
         _buildCell(item.pack.toStringAsFixed(2), blackColor),
         _buildCell(item.qty.toStringAsFixed(2), blackColor),
-        _buildCell(item.rate.toStringAsFixed(4), blackColor),
-        _buildCell(item.amount.toStringAsFixed(2), blackColor),
+        // Replace the existing rate and amount cells with these:
+        _buildCell(
+          item.rate.toStringAsFixed(4),
+          blackColor,
+          align: pw.TextAlign.right,
+        ),
+        _buildCell(
+          item.amount.toStringAsFixed(2),
+          blackColor,
+          align: pw.TextAlign.right,
+        ),
       ];
     } else if (reportType == 'Customer Wise') {
       rowCells = [
@@ -404,8 +414,17 @@ pw.Widget _buildGroupTable(
         _buildCell(item.nos.toString(), blackColor),
         _buildCell(item.pack.toStringAsFixed(2), blackColor),
         _buildCell(item.qty.toStringAsFixed(2), blackColor),
-        _buildCell(item.rate.toStringAsFixed(4), blackColor),
-        _buildCell(item.amount.toStringAsFixed(2), blackColor),
+        // Replace the existing rate and amount cells with these:
+        _buildCell(
+          item.rate.toStringAsFixed(4),
+          blackColor,
+          align: pw.TextAlign.right,
+        ),
+        _buildCell(
+          item.amount.toStringAsFixed(2),
+          blackColor,
+          align: pw.TextAlign.right,
+        ),
       ];
     } else {
       rowCells = [
@@ -415,8 +434,17 @@ pw.Widget _buildGroupTable(
         _buildCell(item.nos.toString(), blackColor),
         _buildCell(item.pack.toStringAsFixed(2), blackColor),
         _buildCell(item.qty.toStringAsFixed(2), blackColor),
-        _buildCell(item.rate.toStringAsFixed(4), blackColor),
-        _buildCell(item.amount.toStringAsFixed(2), blackColor),
+        // Replace the existing rate and amount cells with these:
+        _buildCell(
+          item.rate.toStringAsFixed(4),
+          blackColor,
+          align: pw.TextAlign.right,
+        ),
+        _buildCell(
+          item.amount.toStringAsFixed(2),
+          blackColor,
+          align: pw.TextAlign.right,
+        ),
       ];
     }
 
@@ -456,10 +484,10 @@ pw.Widget _buildGroupTable(
           fontWeight: pw.FontWeight.bold,
           color: blackColor,
         ),
+        textAlign: pw.TextAlign.right,
       ),
     ),
   );
-
   tableRows.add(
     pw.TableRow(
       decoration: pw.BoxDecoration(color: totalRowColor),
@@ -474,10 +502,18 @@ pw.Widget _buildGroupTable(
   );
 }
 
-pw.Widget _buildCell(String text, PdfColor color) {
+pw.Widget _buildCell(
+  String text,
+  PdfColor color, {
+  pw.TextAlign align = pw.TextAlign.left,
+}) {
   return pw.Container(
     padding: const pw.EdgeInsets.all(6),
-    child: pw.Text(text, style: pw.TextStyle(fontSize: 9, color: color)),
+    child: pw.Text(
+      text,
+      style: pw.TextStyle(fontSize: 9, color: color),
+      textAlign: align,
+    ),
   );
 }
 

@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/features/home/models/home_menu_item_dm.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
@@ -47,7 +46,7 @@ class SidebarMenuItem extends StatelessWidget {
             ),
             child: Row(
               children: [
-                SvgPicture.asset(menu.icon, height: 28, width: 24),
+                Icon(menu.icon, size: 24, color: kColorPrimary),
                 AppSpaces.h14,
                 Expanded(
                   child: Column(
@@ -122,7 +121,7 @@ class SubMenuItem extends StatelessWidget {
                   ),
                 ),
                 AppSpaces.h12,
-                SvgPicture.asset(menu.icon, height: 20, width: 20),
+                Icon(menu.icon, size: 24, color: kColorPrimary),
                 AppSpaces.h12,
                 Expanded(
                   child: Text(
@@ -194,14 +193,10 @@ class CompactSidebarMenuItem extends StatelessWidget {
             ),
             child: Row(
               children: [
-                SvgPicture.asset(
+                Icon(
                   menu.icon,
-                  height: 22,
-                  width: 22,
-                  colorFilter: ColorFilter.mode(
-                    isSelected ? kColorPrimary : kColorDarkGrey,
-                    BlendMode.srcIn,
-                  ),
+                  size: 22,
+                  color: isSelected ? kColorPrimary : kColorDarkGrey,
                 ),
                 AppSpaces.h12,
                 Expanded(
@@ -287,14 +282,10 @@ class _AnimatedSidebarMenuItemState extends State<AnimatedSidebarMenuItem> {
                           : kColorDarkGrey.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: SvgPicture.asset(
+                    child: Icon(
                       widget.menu.icon,
-                      height: 20,
-                      width: 20,
-                      colorFilter: ColorFilter.mode(
-                        widget.isSelected ? kColorWhite : kColorDarkGrey,
-                        BlendMode.srcIn,
-                      ),
+                      size: 20,
+                      color: widget.isSelected ? kColorWhite : kColorDarkGrey,
                     ),
                   ),
                   AppSpaces.h12,

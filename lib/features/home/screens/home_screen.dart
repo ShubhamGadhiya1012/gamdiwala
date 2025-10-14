@@ -180,20 +180,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          IconButton(
-            icon: Hero(
-              tag: "profile_icon",
-              child: SvgPicture.asset(
-                kIconProfile,
-                height: 24,
-                width: 24,
-                colorFilter: ColorFilter.mode(kColorPrimary, BlendMode.srcIn),
-              ),
-            ),
-            onPressed: () {
-              Get.to(() => ProfileScreen());
-            },
-          ),
+
           Obx(
             () => Stack(
               clipBehavior: Clip.none,
@@ -283,26 +270,73 @@ class HomeScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: Obx(
-                      () => AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: Text(
-                          _homeController.company.value,
-                          key: ValueKey(_homeController.company.value),
-                          style: TextStyles.kBoldMontserrat(
-                            fontSize: FontSizes.k20FontSize,
-                            color: kColorWhite,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                  IconButton(
+                    icon: Hero(
+                      tag: "profile_icon",
+                      child: SvgPicture.asset(
+                        kIconProfile,
+                        height: 36,
+                        width: 36,
+                        colorFilter: ColorFilter.mode(
+                          kColorWhite,
+                          BlendMode.srcIn,
                         ),
                       ),
                     ),
+                    onPressed: () {
+                      Get.to(() => ProfileScreen());
+                    },
                   ),
-                  IconButton(
-                    icon: Icon(Icons.close, color: kColorWhite),
-                    onPressed: () => Get.back(),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Obx(
+                          () => AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            child: Text(
+                              _homeController.fullName.value,
+                              key: ValueKey(_homeController.fullName.value),
+                              style: TextStyles.kBoldMontserrat(
+                                fontSize: FontSizes.k20FontSize,
+                                color: kColorWhite,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                        Obx(() {
+                          String userType;
+                          switch (_homeController.userType.value) {
+                            case '0':
+                              userType = 'Admin';
+                              break;
+                            case '1':
+                              userType = 'Manager';
+                              break;
+                            case '2':
+                              userType = 'Salesman';
+                              break;
+                            case '3':
+                              userType = 'Engineer';
+                              break;
+                            default:
+                              userType = 'Unknown';
+                          }
+
+                          return Text(
+                            userType,
+                            style: TextStyles.kRegularMontserrat(
+                              fontSize: FontSizes.k12FontSize,
+                              color: kColorWhite.withOpacity(0.8),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -406,25 +440,13 @@ class HomeScreen extends StatelessWidget {
             ),
             Container(
               padding: AppPaddings.p16,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    kColorPrimary.withOpacity(0.3),
-                    kColorPrimary.withOpacity(0.4),
-                    kColorPrimary.withOpacity(0.6),
-                    kColorPrimary.withOpacity(0.8),
-                    kColorPrimary.withOpacity(1),
-                  ],
-                ),
-              ),
+
               child: Center(
                 child: Text(
                   'v${_homeController.appVersion.value}',
                   style: TextStyles.kBoldMontserrat(
                     fontSize: FontSizes.k12FontSize,
-                    color: kColorWhite,
+                    color: kColorGrey,
                   ),
                 ),
               ),

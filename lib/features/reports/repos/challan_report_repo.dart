@@ -49,10 +49,10 @@ class ChallanReportRepo {
     required String iCode,
   }) async {
     String? token = await SecureStorageHelper.read('token');
-    print(fromDate);
-    print(toDate);
-    print(pCode);
-    print(iCode);
+    // print(fromDate);
+    // print(toDate);
+    // print(pCode);
+    // print(iCode);
     try {
       final response = await ApiService.getRequest(
         endpoint: '/Report/challanReport',

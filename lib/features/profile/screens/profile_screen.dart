@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
@@ -57,6 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppAppbar(
         title: 'Profile',
         leading: IconButton(
@@ -64,205 +63,192 @@ class _ProfileScreenState extends State<ProfileScreen>
           icon: Icon(Icons.arrow_back_ios, size: 20, color: kColorPrimary),
         ),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              kColorWhite,
-              kColorWhite.withOpacity(0.95),
-              kColorPrimary.withOpacity(0.05),
-            ],
-            stops: [0.0, 0.7, 1.0],
-          ),
-        ),
-        child: Padding(
-          padding: AppPaddings.p10,
-          child: SingleChildScrollView(
-            physics: BouncingScrollPhysics(),
-            child: Column(
-              children: [
-                AppSpaces.v10,
+      body: Padding(
+        padding: AppPaddings.p10,
+        child: SingleChildScrollView(
+          physics: BouncingScrollPhysics(),
+          child: Column(
+            children: [
+              AppSpaces.v10,
 
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Container(
-                      padding: AppPaddings.p20,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            kColorPrimary,
-                            kColorPrimary.withOpacity(0.8),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Container(
+                    padding: AppPaddings.p20,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          kColorPrimary,
+                          kColorPrimary.withOpacity(0.85),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: kColorPrimary.withOpacity(0.25),
+                          blurRadius: 20,
+                          offset: Offset(0, 8),
+                          spreadRadius: 0,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: kColorPrimary.withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: Offset(0, 8),
-                            spreadRadius: 2,
-                          ),
-                        ],
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Hero(
-                            tag: "profile_icon",
-                            flightShuttleBuilder:
-                                (
-                                  BuildContext flightContext,
-                                  Animation<double> animation,
-                                  HeroFlightDirection flightDirection,
-                                  BuildContext fromHeroContext,
-                                  BuildContext toHeroContext,
-                                ) {
-                                  return AnimatedBuilder(
-                                    animation: animation,
-                                    builder: (context, child) {
-                                      return Container(
-                                        padding: EdgeInsets.all(
-                                          animation.value * 12,
+                      ],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Hero(
+                          tag: "profile_icon",
+                          flightShuttleBuilder:
+                              (
+                                BuildContext flightContext,
+                                Animation<double> animation,
+                                HeroFlightDirection flightDirection,
+                                BuildContext fromHeroContext,
+                                BuildContext toHeroContext,
+                              ) {
+                                return AnimatedBuilder(
+                                  animation: animation,
+                                  builder: (context, child) {
+                                    return Container(
+                                      padding: EdgeInsets.all(
+                                        animation.value * 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Color.lerp(
+                                          Colors.transparent,
+                                          kColorWhite.withOpacity(0.15),
+                                          animation.value,
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: Color.lerp(
-                                            Colors.transparent,
-                                            kColorWhite.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(
+                                          16 * animation.value,
+                                        ),
+                                      ),
+                                      child: SvgPicture.asset(
+                                        kIconProfile,
+                                        height: 18 + (animation.value * 57),
+                                        colorFilter: ColorFilter.mode(
+                                          Color.lerp(
+                                            kColorPrimary,
+                                            kColorWhite,
                                             animation.value,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            16 * animation.value,
-                                          ),
+                                          )!,
+                                          BlendMode.srcIn,
                                         ),
-                                        child: SvgPicture.asset(
-                                          kIconProfile,
-                                          height: 18 + (animation.value * 57),
-                                          colorFilter: ColorFilter.mode(
-                                            Color.lerp(
-                                              kColorPrimary,
-                                              kColorWhite,
-                                              animation.value,
-                                            )!,
-                                            BlendMode.srcIn,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                            child: Container(
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: kColorWhite.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: kColorWhite.withOpacity(0.3),
-                                  width: 1,
-                                ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                          child: Container(
+                            padding: EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: kColorWhite.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: kColorWhite.withOpacity(0.3),
+                                width: 1,
                               ),
-                              child: SvgPicture.asset(
-                                kIconProfile,
-                                height: 75,
-                                colorFilter: ColorFilter.mode(
-                                  kColorWhite,
-                                  BlendMode.srcIn,
-                                ),
+                            ),
+                            child: SvgPicture.asset(
+                              kIconProfile,
+                              height: 75,
+                              colorFilter: ColorFilter.mode(
+                                kColorWhite,
+                                BlendMode.srcIn,
                               ),
                             ),
                           ),
-                          AppSpaces.h20,
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Obx(
-                                  () => Text(
-                                    _controller.fullName.value,
-                                    style: TextStyles.kSemiBoldMontserrat(
-                                      fontSize: FontSizes.k24FontSize,
-                                      color: kColorWhite,
-                                    ),
+                        ),
+                        AppSpaces.h20,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Obx(
+                                () => Text(
+                                  _controller.fullName.value,
+                                  style: TextStyles.kSemiBoldMontserrat(
+                                    fontSize: FontSizes.k24FontSize,
+                                    color: kColorWhite,
                                   ),
                                 ),
-                                AppSpaces.v4,
-                                Obx(
-                                  () => Text(
-                                    _controller.getUserRole(
-                                      _controller.userType.value,
-                                    ),
-                                    style: TextStyles.kRegularMontserrat(
-                                      fontSize: FontSizes.k16FontSize,
-                                      color: kColorWhite.withOpacity(0.9),
-                                    ),
+                              ),
+                              AppSpaces.v4,
+                              Obx(
+                                () => Text(
+                                  _controller.getUserRole(
+                                    _controller.userType.value,
+                                  ),
+                                  style: TextStyles.kRegularMontserrat(
+                                    fontSize: FontSizes.k16FontSize,
+                                    color: kColorWhite.withOpacity(0.9),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+              ),
 
-                AppSpaces.v30,
+              AppSpaces.v30,
 
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    child: Text(
-                      'Account Settings',
-                      style: TextStyles.kSemiBoldMontserrat(
-                        fontSize: FontSizes.k20FontSize,
-                        color: kColorTextPrimary,
-                      ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  child: Text(
+                    'Account Settings',
+                    style: TextStyles.kSemiBoldMontserrat(
+                      fontSize: FontSizes.k20FontSize,
+                      color: kColorTextPrimary,
                     ),
                   ),
                 ),
-                AppSpaces.v14,
-                _buildAnimatedMenuTile(
-                  delay: 200,
-                  iconPath: kIconResetPassword,
-                  title: 'Reset Password',
-                  onTap: () {
-                    Get.to(
-                      () => ResetPasswordScreen(
-                        mobileNumber: _controller.mobileNumber.value,
-                        fullName: _controller.fullName.value,
-                      ),
-                    );
-                  },
-                ),
-                AppSpaces.v14,
-                _buildAnimatedMenuTile(
-                  delay: 200,
-                  iconPath: kIconResetPassword,
-                  title: 'Change Party',
-                  onTap: () {
-                    Get.offAll(() => SelectPartyScreen());
-                  },
-                ),
-                AppSpaces.v14,
-                _buildAnimatedMenuTile(
-                  delay: 300,
-                  iconPath: kIconLogOut,
-                  title: 'Log Out',
-                  isDestructive: true,
-                  onTap: () {
-                    _showBeautifulLogoutDialog();
-                  },
-                ),
+              ),
+              AppSpaces.v14,
 
-                AppSpaces.v30,
-              ],
-            ),
+              _buildAnimatedMenuTile(
+                delay: 200,
+                icon: Icons.lock_reset_rounded,
+                title: 'Reset Password',
+                onTap: () {
+                  Get.to(
+                    () => ResetPasswordScreen(
+                      mobileNumber: _controller.mobileNumber.value,
+                      fullName: _controller.fullName.value,
+                    ),
+                  );
+                },
+              ),
+              AppSpaces.v14,
+              _buildAnimatedMenuTile(
+                delay: 200,
+                icon: Icons.swap_horiz_rounded,
+                title: 'Change Party',
+                onTap: () {
+                  Get.offAll(() => SelectPartyScreen());
+                },
+              ),
+              AppSpaces.v14,
+              _buildAnimatedMenuTile(
+                delay: 300,
+                icon: Icons.logout_rounded,
+                title: 'Log Out',
+                isDestructive: true,
+                onTap: () {
+                  _showBeautifulLogoutDialog();
+                },
+              ),
+
+              AppSpaces.v30,
+            ],
           ),
         ),
       ),
@@ -271,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildAnimatedMenuTile({
     required int delay,
-    required String iconPath,
+    required IconData icon,
     required String title,
     bool isDestructive = false,
     required VoidCallback onTap,
@@ -325,13 +311,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
-                      child: SvgPicture.asset(
-                        iconPath,
-                        height: 24,
-                        colorFilter: ColorFilter.mode(
-                          isDestructive ? Colors.red : kColorPrimary,
-                          BlendMode.srcIn,
-                        ),
+                      child: Icon(
+                        icon,
+                        size: 30,
+                        color: isDestructive ? Colors.red : kColorPrimary,
                       ),
                     ),
                   ),
@@ -389,37 +372,40 @@ class _ProfileScreenState extends State<ProfileScreen>
               content: Container(
                 width: 320,
                 padding: EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: kColorWhite,
+                  borderRadius: BorderRadius.circular(28),
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 50,
-                      height: 50,
+                      width: 80,
+                      height: 80,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFFF6B6B), Color(0xFFEE5A6F)],
-                        ),
+                        color: Color(0xFFFFF3E0),
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFFFF6B6B).withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: Offset(0, 10),
-                          ),
-                        ],
                       ),
                       child: Center(
-                        child: SvgPicture.asset(
-                          kIconLogOut,
-                          height: 35,
-                          colorFilter: ColorFilter.mode(
-                            kColorWhite,
-                            BlendMode.srcIn,
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Color(0xFFFF9800),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.logout_rounded,
+                              size: 24,
+                              color: kColorWhite,
+                            ),
                           ),
                         ),
                       ),
                     ),
                     AppSpaces.v24,
+
                     Text(
                       'Log Out',
                       style: TextStyles.kSemiBoldMontserrat(
@@ -428,6 +414,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       ),
                     ),
                     AppSpaces.v10,
+
                     Text(
                       'Are you sure you want to\nlog out from your account?',
                       style: TextStyles.kRegularMontserrat(
@@ -437,15 +424,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                       textAlign: TextAlign.center,
                     ),
                     AppSpaces.v30,
+
                     Row(
                       children: [
                         Expanded(
                           child: GestureDetector(
                             onTap: () => Get.back(),
                             child: Container(
-                              height: 44,
+                              height: 50,
                               decoration: BoxDecoration(
-                                color: kColorGrey.withOpacity(0.2),
+                                color: Color(0xFFF5F5F5),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Center(
@@ -468,20 +456,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                               _controller.logoutUser();
                             },
                             child: Container(
-                              height: 44,
+                              height: 50,
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Color(0xFFFF6B6B),
-                                    Color(0xFFEE5A6F),
-                                  ],
-                                ),
+                                color: Color(0xFFEF5350),
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Color(0xFFFF6B6B).withOpacity(0.4),
-                                    blurRadius: 16,
-                                    offset: Offset(0, 8),
+                                    color: Color(0xFFEF5350).withOpacity(0.3),
+                                    blurRadius: 12,
+                                    offset: Offset(0, 6),
                                   ),
                                 ],
                               ),

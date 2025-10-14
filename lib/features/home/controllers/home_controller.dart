@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
-import 'package:gamdiwala/constants/image_constants.dart';
 import 'package:gamdiwala/features/authentication/auth/screens/auth_screen.dart';
 import 'package:gamdiwala/features/challan_entry/screens/challan_entry_screens.dart';
 import 'package:gamdiwala/features/home/models/home_menu_item_dm.dart';
@@ -10,6 +9,7 @@ import 'package:gamdiwala/features/home/models/item_dm.dart';
 import 'package:gamdiwala/features/home/repos/home_repo.dart';
 import 'package:gamdiwala/features/home/screens/home_screen.dart';
 import 'package:gamdiwala/features/reports/screens/challan_report_screen.dart';
+import 'package:gamdiwala/features/reports/screens/order_report_screen.dart';
 import 'package:gamdiwala/features/user_settings/models/user_access_dm.dart';
 import 'package:gamdiwala/features/user_settings/repos/user_access_repo.dart';
 import 'package:gamdiwala/features/user_settings/screens/unauth_users_screen.dart';
@@ -34,14 +34,31 @@ class HomeController extends GetxController {
   var appVersion = ''.obs;
   var itemList = <ItemDm>[].obs;
 
+  var fullName = ''.obs;
+  var userType = ''.obs;
+
   @override
   void onInit() async {
     super.onInit();
+
+    await loadUserInfo();
     await _loadVersion();
     await loadCompany();
     await checkAppVersion();
     await getUserAccess();
     await getItems();
+  }
+
+  Future<void> loadUserInfo() async {
+    try {
+      fullName.value = await SecureStorageHelper.read('fullName') ?? 'Unknown';
+      userType.value = await SecureStorageHelper.read('userType') ?? 'guest';
+    } catch (e) {
+      showErrorSnackbar(
+        'Failed to Load User Info',
+        'There was an issue loading your data. Please try again.',
+      );
+    }
   }
 
   Future<void> getItems() async {
@@ -223,39 +240,39 @@ class HomeController extends GetxController {
     menuItems.value = [
       HomeMenuItemDm(
         menuName: 'Order',
-        icon: kIconUserManagement,
+        icon: Icons.shopping_bag_outlined,
         onTap: () {
           Get.to(() => HomeScreen());
         },
       ),
       HomeMenuItemDm(
         menuName: 'Challan',
-        icon: kIconUserManagement,
+        icon: Icons.description_outlined,
         onTap: () {
           Get.to(() => ChallanEntryScreen());
         },
       ),
       HomeMenuItemDm(
         menuName: 'User Settings',
-        icon: kIconUserSettings,
+        icon: Icons.settings_outlined,
         subMenus: [
           HomeMenuItemDm(
             menuName: 'User Rights',
-            icon: kIconUserRights,
+            icon: Icons.admin_panel_settings_outlined,
             onTap: () {
               Get.to(() => UsersScreen(fromWhere: 'R'));
             },
           ),
           HomeMenuItemDm(
             menuName: 'Manage User',
-            icon: kIconUserManagement,
+            icon: Icons.manage_accounts_outlined,
             onTap: () {
               Get.to(() => UsersScreen(fromWhere: 'M'));
             },
           ),
           HomeMenuItemDm(
             menuName: 'User Auth',
-            icon: kIconUserAuthorisation,
+            icon: Icons.verified_user_outlined,
             onTap: () {
               Get.to(() => UnauthUsersScreen());
             },
@@ -264,20 +281,20 @@ class HomeController extends GetxController {
       ),
       HomeMenuItemDm(
         menuName: 'Reports',
-        icon: kIconUserAuthorisation,
+        icon: Icons.assessment_outlined,
         subMenus: [
           HomeMenuItemDm(
             menuName: 'Challan Report',
-            icon: kIconUserAuthorisation,
+            icon: Icons.summarize_outlined,
             onTap: () {
               Get.to(() => ChallanReportScreen());
             },
           ),
           HomeMenuItemDm(
             menuName: 'Order Report',
-            icon: kIconUserAuthorisation,
+            icon: Icons.analytics_outlined,
             onTap: () {
-              // Get.to(() => OrderReportScreen());
+              Get.to(() => OrderReportScreen());
             },
           ),
         ],

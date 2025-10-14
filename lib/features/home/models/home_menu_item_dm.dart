@@ -4,8 +4,7 @@ enum HomeMenuCardType { type1, type2 }
 
 class HomeMenuItemDm {
   final String menuName;
-
-  final String icon;
+  final IconData icon; // Changed from String to IconData
   final Widget? screen;
   final VoidCallback? onTap;
   final HomeMenuCardType? type;
@@ -13,7 +12,6 @@ class HomeMenuItemDm {
 
   HomeMenuItemDm({
     required this.menuName,
-
     required this.icon,
     this.screen,
     this.onTap,

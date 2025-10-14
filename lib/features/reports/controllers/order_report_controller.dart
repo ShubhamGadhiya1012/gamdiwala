@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/features/authentication/auth/models/party_dm.dart';
 import 'package:gamdiwala/features/home/models/item_dm.dart';
-import 'package:gamdiwala/features/reports/models/challan_repot_dm.dart';
-import 'package:gamdiwala/features/reports/repos/challan_report_repo.dart';
-import 'package:gamdiwala/features/reports/widgets/challan_report_pdf.dart';
+import 'package:gamdiwala/features/reports/models/order_report_dm.dart';
+import 'package:gamdiwala/features/reports/repos/order_report_repo.dart';
+import 'package:gamdiwala/features/reports/widgets/order_report_pdf.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-class ChallanReportController extends GetxController {
+class OrderReportController extends GetxController {
   var isLoading = false.obs;
 
   var fromDateController = TextEditingController();
   var toDateController = TextEditingController();
 
-  var reportTypes = <String>['Date Wise', 'Customer Wise', 'Item Wise'].obs;
-  var selectedReportType = 'Date Wise'.obs;
+  var statusList = <String>['ALL', 'PENDING', 'COMPLETE'].obs;
+  var selectedStatus = 'ALL'.obs;
+
+  var typeList = <String>['DETAIL', 'WITH CHALLAN', 'SUMMARY'].obs;
+  var selectedType = 'DETAIL'.obs;
 
   var parties = <PartyDm>[].obs;
   var partyNames = <String>[].obs;
@@ -51,11 +54,19 @@ class ChallanReportController extends GetxController {
 
   Future<void> getParties() async {
     try {
-      final fetchedParties = await ChallanReportRepo.getParties();
+      final fetchedParties = await OrderReportRepo.getParties();
       parties.assignAll(fetchedParties);
       partyNames.assignAll(fetchedParties.map((p) => p.pName));
-      selectedPartyName.value = '';
-      selectedPartyCode.value = '';
+    } catch (e) {
+      showErrorSnackbar('Error', e.toString());
+    }
+  }
+
+  Future<void> getItems() async {
+    try {
+      final fetchedItems = await OrderReportRepo.getItems();
+      items.assignAll(fetchedItems);
+      itemNames.assignAll(fetchedItems.map((i) => i.iName));
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
     }
@@ -67,33 +78,24 @@ class ChallanReportController extends GetxController {
     selectedPartyCode.value = selectedPartyObj?.pCode ?? '';
   }
 
-  Future<void> getItems() async {
-    try {
-      final fetchedItems = await ChallanReportRepo.getItems();
-      items.assignAll(fetchedItems);
-      itemNames.assignAll(fetchedItems.map((i) => i.iName));
-      selectedItemName.value = '';
-      selectedItemCode.value = '';
-    } catch (e) {
-      showErrorSnackbar('Error', e.toString());
-    }
-  }
-
   void onItemSelected(String? iName) {
     selectedItemName.value = iName ?? '';
     final selectedItemObj = items.firstWhereOrNull((i) => i.iName == iName);
     selectedItemCode.value = selectedItemObj?.iCode ?? '';
   }
 
-  void onReportTypeSelected(String? reportType) {
-    selectedReportType.value = reportType ?? 'Date Wise';
+  void onStatusSelected(String? status) {
+    selectedStatus.value = status ?? 'ALL';
+  }
+
+  void onTypeSelected(String? type) {
+    selectedType.value = type ?? 'DETAIL';
   }
 
   Future<void> getReport() async {
     final fromDate = DateFormat(
       'yyyy-MM-dd',
     ).format(DateFormat('dd-MM-yyyy').parse(fromDateController.text));
-
     final toDate = DateFormat(
       'yyyy-MM-dd',
     ).format(DateFormat('dd-MM-yyyy').parse(toDateController.text));
@@ -101,39 +103,35 @@ class ChallanReportController extends GetxController {
     try {
       isLoading.value = true;
 
-      final response = await ChallanReportRepo.getChallanReport(
+      final response = await OrderReportRepo.getOrderReport(
         fromDate: fromDate,
         toDate: toDate,
         pCode: selectedPartyCode.value,
         iCode: selectedItemCode.value,
+        status: selectedStatus.value,
+        type: selectedType.value,
       );
 
       final List<dynamic>? jsonList = response?['data'];
-
       if (jsonList == null || jsonList.isEmpty) {
-        showErrorSnackbar(
-          'No Data',
-          'No records found for the selected filters.',
-        );
+        showErrorSnackbar('No Data', 'No records found.');
         return;
       }
 
-      final List<ChallanReportDm> reportData = jsonList
-          .map((json) => ChallanReportDm.fromJson(json))
+      final reportData = jsonList
+          .map((json) => OrderReportDm.fromJson(json))
           .toList();
 
-      await generateChallanReportPDF(
+      await generateOrderReportPDF(
         reportData,
         fromDateController.text,
         toDateController.text,
-        selectedReportType.value,
+        selectedStatus.value,
+        selectedType.value,
       );
     } catch (e) {
-      if (e is Map<String, dynamic>) {
-        showErrorSnackbar('Error', e['message']);
-      } else {
-        showErrorSnackbar('Error', e.toString());
-      }
+      showErrorSnackbar('Error', e.toString());
+      print(e);
     } finally {
       isLoading.value = false;
     }
@@ -145,10 +143,11 @@ class ChallanReportController extends GetxController {
     final formatter = DateFormat('dd-MM-yyyy');
     fromDateController.text = formatter.format(monthStart);
     toDateController.text = formatter.format(now);
-    selectedReportType.value = 'Date Wise';
-    selectedPartyName.value = '';
     selectedPartyCode.value = '';
-    selectedItemName.value = '';
     selectedItemCode.value = '';
+    selectedPartyName.value = '';
+    selectedItemName.value = '';
+    selectedStatus.value = 'ALL';
+    selectedType.value = 'DETAIL';
   }
 }
