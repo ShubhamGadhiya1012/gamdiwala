@@ -80,6 +80,7 @@ class ChallanItemDm {
   final int nos;
   final double qty;
   final String unit;
+  final String container;
 
   ChallanItemDm({
     required this.iCode,
@@ -88,6 +89,7 @@ class ChallanItemDm {
     required this.nos,
     required this.qty,
     required this.unit,
+    required this.container,
   });
 
   factory ChallanItemDm.fromJson(Map<String, dynamic> json) {
@@ -98,6 +100,7 @@ class ChallanItemDm {
       nos: json['nos'] ?? 0,
       qty: (json['qty'] ?? 0).toDouble(),
       unit: json['unit'] ?? '',
+      container: json['container'] ?? '',
     );
   }
 }

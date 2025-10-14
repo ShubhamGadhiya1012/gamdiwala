@@ -37,6 +37,9 @@ class OrderReportRepo {
     required String type,
   }) async {
     String? token = await SecureStorageHelper.read('token');
+    // print(status);
+    // print(type);
+
     final response = await ApiService.getRequest(
       endpoint: '/Report/orderReport',
       queryParams: {
@@ -49,7 +52,7 @@ class OrderReportRepo {
       },
       token: token,
     );
-    print(response);
+    // print(response);
     return response;
   }
 }

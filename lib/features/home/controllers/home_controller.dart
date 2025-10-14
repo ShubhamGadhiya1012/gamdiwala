@@ -253,6 +253,27 @@ class HomeController extends GetxController {
         },
       ),
       HomeMenuItemDm(
+        menuName: 'Reports',
+        icon: Icons.assessment_outlined,
+        subMenus: [
+          HomeMenuItemDm(
+            menuName: 'Order Report',
+            icon: Icons.analytics_outlined,
+            onTap: () {
+              Get.to(() => OrderReportScreen());
+            },
+          ),
+          HomeMenuItemDm(
+            menuName: 'Challan Report',
+            icon: Icons.summarize_outlined,
+            onTap: () {
+              Get.to(() => ChallanReportScreen());
+            },
+          ),
+        ],
+      ),
+
+      HomeMenuItemDm(
         menuName: 'User Settings',
         icon: Icons.settings_outlined,
         subMenus: [
@@ -275,26 +296,6 @@ class HomeController extends GetxController {
             icon: Icons.verified_user_outlined,
             onTap: () {
               Get.to(() => UnauthUsersScreen());
-            },
-          ),
-        ],
-      ),
-      HomeMenuItemDm(
-        menuName: 'Reports',
-        icon: Icons.assessment_outlined,
-        subMenus: [
-          HomeMenuItemDm(
-            menuName: 'Challan Report',
-            icon: Icons.summarize_outlined,
-            onTap: () {
-              Get.to(() => ChallanReportScreen());
-            },
-          ),
-          HomeMenuItemDm(
-            menuName: 'Order Report',
-            icon: Icons.analytics_outlined,
-            onTap: () {
-              Get.to(() => OrderReportScreen());
             },
           ),
         ],

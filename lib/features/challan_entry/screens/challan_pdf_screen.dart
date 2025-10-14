@@ -187,7 +187,7 @@ class ChallanPdfScreen {
     double totalQty = 0;
 
     for (var item in data.challanItems) {
-      totalNos += item.nos;
+      totalNos += item.carat;
       totalQty += item.qty;
     }
 
@@ -216,12 +216,9 @@ class ChallanPdfScreen {
           (item) => pw.TableRow(
             children: [
               _buildTableCell(item.iName, blackColor),
+              _buildTableCell(item.container, blackColor),
               _buildTableCell(
                 item.carat > 0 ? item.carat.toString() : '',
-                blackColor,
-              ),
-              _buildTableCell(
-                item.nos > 0 ? item.nos.toString() : '',
                 blackColor,
                 center: true,
               ),
