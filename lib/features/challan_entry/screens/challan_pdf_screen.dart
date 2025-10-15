@@ -33,7 +33,6 @@ class ChallanPdfScreen {
       await _savePdf(pdf, data.challanNo);
     } catch (e) {
       showErrorSnackbar('Error', 'Failed to generate Challan PDF: $e');
-      // print(e);
     }
   }
 
@@ -183,14 +182,6 @@ class ChallanPdfScreen {
     PdfColor blackColor,
     PdfColor greyColor,
   ) {
-    int totalNos = 0;
-    double totalQty = 0;
-
-    for (var item in data.challanItems) {
-      totalNos += item.carat;
-      totalQty += item.qty;
-    }
-
     String unit = data.challanItems.isNotEmpty ? data.challanItems[0].unit : '';
 
     return pw.Table(
@@ -230,26 +221,6 @@ class ChallanPdfScreen {
             ],
           ),
         ),
-
-        pw.TableRow(
-          decoration: pw.BoxDecoration(color: PdfColors.grey200),
-          children: [
-            _buildTableCell('', blackColor),
-            _buildTableCell('Total', blackColor, isHeader: true),
-            _buildTableCell(
-              totalNos > 0 ? totalNos.toString() : '0',
-              blackColor,
-              center: true,
-              isHeader: true,
-            ),
-            _buildTableCell(
-              totalQty.toStringAsFixed(3),
-              blackColor,
-              center: true,
-              isHeader: true,
-            ),
-          ],
-        ),
       ],
     );
   }
@@ -263,168 +234,151 @@ class ChallanPdfScreen {
     double totalQty = 0;
 
     for (var item in data.challanItems) {
-      totalNos += item.nos;
+      totalNos += item.carat;
       totalQty += item.qty;
     }
 
     String amountInWords = _convertAmountToWords(data.amount);
-
     double srAmt = data.remainingAmount;
 
     return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Container(
-          decoration: pw.BoxDecoration(
-            border: pw.Border(top: pw.BorderSide(color: blackColor, width: 1)),
-          ),
-          padding: const pw.EdgeInsets.only(top: 10),
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Expanded(
-                flex: 2,
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Row(
-                      children: [
-                        pw.Container(
-                          width: 100,
-                          child: pw.Text(
-                            'Truck No. : ${data.vCode}',
-                            style: pw.TextStyle(fontSize: 9),
-                          ),
-                        ),
-                        pw.Text(
-                          'User: Admin',
-                          style: pw.TextStyle(fontSize: 9),
-                        ),
-                      ],
-                    ),
-                    pw.SizedBox(height: 8),
-                    pw.Text(
-                      'Amount In Word : $amountInWords',
-                      style: pw.TextStyle(
-                        fontSize: 9,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                    pw.SizedBox(height: 8),
-                    pw.Row(
-                      children: [
-                        _buildAmountField('Bill Amt', data.amount, blackColor),
-                        pw.SizedBox(width: 20),
-                        _buildAmountField('Revd. Amt', 0.00, blackColor),
-                      ],
-                    ),
-                    pw.SizedBox(height: 4),
-                    pw.Row(
-                      children: [
-                        _buildField('Send Cr', data.sendCr, blackColor),
-                        pw.SizedBox(width: 20),
-                        _buildField('Send Can', data.sendCan, blackColor),
-                      ],
-                    ),
-                    pw.SizedBox(height: 4),
-                    pw.Row(
-                      children: [
-                        _buildField('Send Bag', data.sendBag, blackColor),
-                      ],
-                    ),
-                    pw.SizedBox(height: 4),
-                    pw.Row(
-                      children: [
-                        _buildField('Rec Cr', data.recCr, blackColor),
-                        pw.SizedBox(width: 20),
-                        _buildField('Rec Can', data.recCan, blackColor),
-                      ],
-                    ),
-                    pw.SizedBox(height: 4),
-                    pw.Row(
-                      children: [
-                        _buildField('Rem Cr', data.remCr, blackColor),
-                        pw.SizedBox(width: 20),
-                        _buildField('Rem Can', data.remCan, blackColor),
-                      ],
-                    ),
-                    pw.SizedBox(height: 8),
-                    pw.Text(
-                      'Remaining Amount: ${data.remainingAmount.toStringAsFixed(2)}',
-                      style: pw.TextStyle(
-                        fontSize: 10,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          width: double.infinity,
+          child: pw.Divider(color: blackColor, thickness: 0.8),
+        ),
 
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.end,
-                  children: [
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Text(
-                          'Total',
-                          style: pw.TextStyle(
-                            fontSize: 10,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                        pw.Text(
-                          totalNos > 0 ? totalNos.toString() : '0',
-                          style: pw.TextStyle(
-                            fontSize: 10,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                        pw.Text(
-                          totalQty.toStringAsFixed(3),
-                          style: pw.TextStyle(
-                            fontSize: 10,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                      ],
+        pw.Table(
+          border: pw.TableBorder.symmetric(
+            inside: pw.BorderSide.none,
+            outside: pw.BorderSide.none,
+          ),
+          columnWidths: const {
+            0: pw.FlexColumnWidth(4),
+            1: pw.FlexColumnWidth(2),
+            2: pw.FlexColumnWidth(1.5),
+            3: pw.FlexColumnWidth(2),
+          },
+          children: [
+            pw.TableRow(
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                  child: pw.Text(
+                    'Truck No: ${data.vCode}',
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
                     ),
-                    pw.SizedBox(height: 20),
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Text('S.R.Amt:', style: pw.TextStyle(fontSize: 9)),
-                        pw.Text(
-                          srAmt.toStringAsFixed(2),
-                          style: pw.TextStyle(fontSize: 9),
-                        ),
-                      ],
-                    ),
-                    pw.SizedBox(height: 8),
-                    pw.Container(
-                      height: 40,
-                      decoration: pw.BoxDecoration(
-                        border: pw.Border.all(color: blackColor),
-                      ),
-                      child: pw.Center(
-                        child: pw.Text(
-                          'Customer\'s Sign',
-                          style: pw.TextStyle(fontSize: 9),
-                        ),
-                      ),
-                    ),
-                    pw.SizedBox(height: 8),
-                    pw.Text(
-                      'For, G.M.P.',
-                      style: pw.TextStyle(
-                        fontSize: 9,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                  child: pw.Text(
+                    'User: Admin',
+                    style: pw.TextStyle(fontSize: 9),
+                  ),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                  child: pw.Text(
+                    totalNos.toString(),
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                  child: pw.Text(
+                    totalQty.toStringAsFixed(3),
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        pw.Container(
+          width: double.infinity,
+          child: pw.Divider(color: blackColor, thickness: 0.8),
+        ),
+
+        pw.SizedBox(height: 6),
+
+        pw.Text(
+          'Amount In Word : $amountInWords',
+          style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 8),
+        pw.Container(
+          width: double.infinity,
+          child: pw.Divider(color: blackColor, thickness: 0.8),
+        ),
+        pw.Row(
+          children: [
+            _buildAmountField('Bill Amt', data.amount, blackColor),
+            pw.SizedBox(width: 20),
+            _buildAmountField('Revd. Amt', 0.00, blackColor),
+          ],
+        ),
+        pw.SizedBox(height: 4),
+
+        pw.Row(
+          children: [
+            _buildField('Send Cr', data.sendCr, blackColor),
+            pw.SizedBox(width: 20),
+            _buildField('Send Can', data.sendCan, blackColor),
+          ],
+        ),
+        pw.SizedBox(height: 4),
+        pw.Row(children: [_buildField('Send Bag', data.sendBag, blackColor)]),
+        pw.SizedBox(height: 4),
+
+        pw.Row(
+          children: [
+            _buildField('Rec Cr', data.recCr, blackColor),
+            pw.SizedBox(width: 20),
+            _buildField('Rec Can', data.recCan, blackColor),
+          ],
+        ),
+        pw.SizedBox(height: 4),
+        pw.Row(
+          children: [
+            _buildField('Rem Cr', data.remCr, blackColor),
+            pw.SizedBox(width: 20),
+            _buildField('Rem Can', data.remCan, blackColor),
+          ],
+        ),
+        pw.SizedBox(height: 8),
+
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text(
+              'Remaining Amount: ${srAmt.toStringAsFixed(2)}',
+              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              'Customer\'s Sign',
+              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 8),
+        pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            'For, G.M.P.',
+            style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
           ),
         ),
       ],
