@@ -319,10 +319,7 @@ class ChallanPdfScreen {
           style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
         ),
         pw.SizedBox(height: 8),
-        pw.Container(
-          width: double.infinity,
-          child: pw.Divider(color: blackColor, thickness: 0.8),
-        ),
+
         pw.Row(
           children: [
             _buildAmountField('Bill Amt', data.amount, blackColor),
