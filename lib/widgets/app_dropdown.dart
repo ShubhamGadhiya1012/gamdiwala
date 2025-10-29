@@ -189,7 +189,7 @@ class AppDropdown extends StatelessWidget {
     required double borderWidth,
   }) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(50),
       borderSide: BorderSide(color: borderColor, width: borderWidth),
     );
   }

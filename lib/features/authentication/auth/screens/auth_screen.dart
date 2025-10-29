@@ -25,19 +25,17 @@ class AuthScreen extends StatelessWidget {
           onTap: () {
             FocusManager.instance.primaryFocus?.unfocus();
           },
-          // Add horizontal swipe detection
+
           onPanUpdate: (details) {
-            // Swipe right to go to Register (left side)
             if (details.delta.dx > 10 && _controller.isLoginMode.value) {
               _controller.toggleMode();
-            }
-            // Swipe left to go to Login (right side)
-            else if (details.delta.dx < -10 && !_controller.isLoginMode.value) {
+            } else if (details.delta.dx < -10 &&
+                !_controller.isLoginMode.value) {
               _controller.toggleMode();
             }
           },
           child: Scaffold(
-            backgroundColor: kColorBackground,
+            backgroundColor: kColorWhite,
             resizeToAvoidBottomInset: true,
             body: SafeArea(
               child: SingleChildScrollView(
@@ -69,7 +67,7 @@ class AuthScreen extends StatelessWidget {
             _controller.isLoginMode.value
                 ? 'Welcome back'
                 : 'Create an account',
-            style: TextStyles.kRegularMontserrat(
+            style: TextStyles.kBoldMontserrat(
               fontSize: FontSizes.k28FontSize,
               color: kColorPrimary,
             ),
@@ -99,9 +97,8 @@ class AuthScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Register on the left
             _buildToggleOption('Register', !_controller.isLoginMode.value),
-            // Login on the right
+
             _buildToggleOption('Login', _controller.isLoginMode.value),
           ],
         ),
@@ -129,9 +126,9 @@ class AuthScreen extends StatelessWidget {
           child: Center(
             child: Text(
               title,
-              style: TextStyles.kRegularMontserrat(
+              style: TextStyles.kSemiBoldMontserrat(
                 fontSize: FontSizes.k16FontSize,
-                color: isActive ? Colors.white : kColorDarkGrey,
+                color: isActive ? kColorWhite : kColorDarkGrey,
               ),
             ),
           ),
@@ -148,14 +145,8 @@ class AuthScreen extends StatelessWidget {
           return SlideTransition(
             position: Tween<Offset>(
               begin: _controller.isLoginMode.value
-                  ? const Offset(
-                      -1.0,
-                      0.0,
-                    ) // Slide from left when going to login
-                  : const Offset(
-                      1.0,
-                      0.0,
-                    ), // Slide from right when going to register
+                  ? const Offset(-1.0, 0.0)
+                  : const Offset(1.0, 0.0),
               end: Offset.zero,
             ).animate(animation),
             child: child,
@@ -301,7 +292,7 @@ class AuthScreen extends StatelessWidget {
                 if (value!.isEmpty) {
                   return 'Please enter a password';
                 }
-                if (value.length < 6) {
+                if (value.length < 3) {
                   return 'Password must be at least 6 characters';
                 }
                 return null;

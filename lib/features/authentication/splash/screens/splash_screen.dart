@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/constants/image_constants.dart';
 import 'package:gamdiwala/features/authentication/auth/screens/auth_screen.dart';
+import 'package:gamdiwala/features/authentication/auth/screens/select_party_screen.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
 import 'package:gamdiwala/styles/text_styles.dart';
 import 'package:gamdiwala/utils/helpers/secure_storage_helper.dart';
@@ -44,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     Future.delayed(const Duration(seconds: 1), () {
       if (token != null && token.isNotEmpty) {
-        Get.offAll(() => ());
+        Get.offAll(() => SelectPartyScreen());
       } else {
         Get.offAll(() => AuthScreen());
       }
@@ -82,7 +83,7 @@ class _SplashScreenState extends State<SplashScreen>
                 'v$appVersion',
                 style: TextStyles.kBoldMontserrat(
                   fontSize: FontSizes.k16FontSize,
-                  color: kColorGrey,
+                  color: kColorBlack,
                 ),
               ),
             ),

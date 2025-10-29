@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/features/authentication/splash/screens/splash_screen.dart';
 import 'package:get/get.dart';
 
@@ -26,7 +27,10 @@ class MyApp extends StatelessWidget {
           ).copyWith(textScaler: TextScaler.linear(1.0)),
           child: GetMaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(useMaterial3: true),
+            theme: ThemeData(
+              useMaterial3: true,
+              scaffoldBackgroundColor: kColorWhite,
+            ),
             home: const SplashScreen(),
           ),
         );

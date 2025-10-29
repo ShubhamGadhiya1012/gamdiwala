@@ -38,7 +38,7 @@ class AppTitleValueContainer extends StatelessWidget {
         width: double.infinity,
         padding: AppPaddings.p10,
         decoration: BoxDecoration(
-          color: color ?? kColorTextPrimary.withOpacity(0.15),
+          color: color ?? kColorPrimary.withOpacity(0.15),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Stack(

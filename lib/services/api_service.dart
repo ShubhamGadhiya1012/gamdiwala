@@ -3,9 +3,10 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // static const String kBaseUrl = 'http://192.168.0.135:8088/api'; // development
-  static const String kBaseUrl = 'http://202.21.38.38:8081/api'; // production
+  static const String kBaseUrl = 'http://160.187.80.165:8080/api'; // production
   // static const String kBaseUrl = 'http://192.168.0.135:5175/api'; // Dhruvbhai debugging
-  // static const String kBaseUrl = 'http://192.168.0.145:5175/api'; // Dhruvilbhai debugging
+  // static const String kBaseUrl =
+  //     'http://192.168.0.145:5111/api'; // Dhruvilbhai debugging
 
   static Future<dynamic> getRequest({
     required String endpoint,

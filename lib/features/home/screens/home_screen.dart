@@ -1,0 +1,459 @@
+// ignore_for_file: deprecated_member_use
+
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:gamdiwala/constants/color_constants.dart';
+import 'package:gamdiwala/constants/image_constants.dart';
+import 'package:gamdiwala/features/home/controllers/home_controller.dart';
+import 'package:gamdiwala/features/home/controllers/cart_controller.dart';
+import 'package:gamdiwala/features/home/screens/cart_screen.dart';
+import 'package:gamdiwala/features/home/widgets/home_item_card.dart';
+import 'package:gamdiwala/features/home/widgets/sidebar_menu_item.dart';
+import 'package:gamdiwala/features/profile/screens/profile_screen.dart';
+import 'package:gamdiwala/styles/font_sizes.dart';
+import 'package:gamdiwala/styles/text_styles.dart';
+import 'package:gamdiwala/utils/screen_utils/app_paddings.dart';
+import 'package:gamdiwala/utils/screen_utils/app_spacings.dart';
+import 'package:gamdiwala/widgets/app_loading_overlay.dart';
+import 'package:get/get.dart';
+
+class HomeScreen extends StatelessWidget {
+  HomeScreen({super.key});
+
+  final HomeController _homeController = Get.put(HomeController());
+  final CartController _cartController = Get.put(CartController());
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: kColorWhite,
+          drawer: _buildDrawer(context),
+          body: Column(
+            children: [
+              _buildAppBar(context),
+              Expanded(
+                child: Container(
+                  color: Colors.grey[50],
+                  child: Obx(() {
+                    final hasOrderAccess = _homeController.menuAccess.any(
+                      (menu) => menu.menuName == 'Order' && menu.access,
+                    );
+
+                    if (!hasOrderAccess) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.lock_outline,
+                              size: 80,
+                              color: kColorDarkGrey.withOpacity(0.3),
+                            ),
+                            AppSpaces.h24,
+                            Text(
+                              'No Access',
+                              style: TextStyles.kBoldMontserrat(
+                                fontSize: FontSizes.k24FontSize,
+                                color: kColorTextPrimary,
+                              ),
+                            ),
+                            AppSpaces.h12,
+                            Text(
+                              'Contact your administrator',
+                              style: TextStyles.kRegularMontserrat(
+                                fontSize: FontSizes.k16FontSize,
+                                color: kColorDarkGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    if (_homeController.itemList.isEmpty &&
+                        !_homeController.isLoading.value) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 80,
+                              color: kColorDarkGrey.withOpacity(0.3),
+                            ),
+                            AppSpaces.h24,
+                            Text(
+                              'No Items Found',
+                              style: TextStyles.kBoldMontserrat(
+                                fontSize: FontSizes.k24FontSize,
+                                color: kColorTextPrimary,
+                              ),
+                            ),
+                            AppSpaces.h12,
+                            Text(
+                              'No items available to display',
+                              style: TextStyles.kRegularMontserrat(
+                                fontSize: FontSizes.k16FontSize,
+                                color: kColorDarkGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      backgroundColor: kColorWhite,
+                      color: kColorPrimary,
+                      strokeWidth: 2.5,
+                      onRefresh: () async {
+                        await _homeController.getItems();
+                        await _cartController.getCartItems();
+                      },
+                      child: ListView.builder(
+                        padding: AppPaddings.p10,
+                        itemCount: _homeController.itemList.length,
+                        itemBuilder: (context, index) {
+                          final item = _homeController.itemList[index];
+                          return HomeItemCard(item: item, onTap: () {});
+                        },
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Obx(
+          () => AppLoadingOverlay(
+            isLoading:
+                _homeController.isLoading.value ||
+                _cartController.isLoading.value,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAppBar(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 12,
+        left: 16,
+        right: 16,
+        bottom: 12,
+      ),
+      decoration: BoxDecoration(
+        color: kColorWhite,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(Icons.menu, color: kColorPrimary),
+            onPressed: () {
+              _scaffoldKey.currentState?.openDrawer();
+            },
+          ),
+          AppSpaces.h8,
+          Expanded(
+            child: Obx(
+              () => Text(
+                _homeController.company.value,
+                style: TextStyles.kBoldMontserrat(
+                  fontSize: FontSizes.k18FontSize,
+                  color: kColorPrimary,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+
+          Obx(
+            () => Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.shopping_cart_outlined,
+                    color: kColorPrimary,
+                  ),
+                  onPressed: () {
+                    Get.to(() => CartScreen());
+                  },
+                ),
+                if (_cartController.cartCount.value > 0)
+                  Positioned(
+                    right: 6,
+                    top: 6,
+                    child: Container(
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: BoxConstraints(minWidth: 18, minHeight: 18),
+                      child: Center(
+                        child: Text(
+                          _cartController.cartCount.value > 99
+                              ? '99+'
+                              : '${_cartController.cartCount.value}',
+                          style: TextStyles.kBoldMontserrat(
+                            fontSize: FontSizes.k10FontSize,
+                            color: kColorWhite,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      backgroundColor: kColorWhite,
+      child: Obx(() {
+        final accessMap = {
+          for (var menu in _homeController.menuAccess)
+            menu.menuName: menu.access,
+        };
+
+        final visibleMenuItems = _homeController.menuItems
+            .where((item) => accessMap[item.menuName] ?? false)
+            .toList();
+
+        return Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 20,
+                left: 20,
+                right: 20,
+                bottom: 20,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    kColorPrimary,
+                    kColorPrimary.withOpacity(0.85),
+                    kColorPrimary.withOpacity(0.7),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: kColorPrimary.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Hero(
+                      tag: "profile_icon",
+                      child: SvgPicture.asset(
+                        kIconProfile,
+                        height: 40,
+                        width: 40,
+                        colorFilter: ColorFilter.mode(
+                          kColorWhite,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                    onPressed: () {
+                      Get.to(() => ProfileScreen());
+                    },
+                  ),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Obx(
+                          () => AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            child: Text(
+                              _homeController.fullName.value,
+                              key: ValueKey(_homeController.fullName.value),
+                              style: TextStyles.kBoldMontserrat(
+                                fontSize: FontSizes.k20FontSize,
+                                color: kColorWhite,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                        Obx(() {
+                          String userType;
+                          switch (_homeController.userType.value) {
+                            case '0':
+                              userType = 'Admin';
+                              break;
+                            case '1':
+                              userType = 'Manager';
+                              break;
+                            case '2':
+                              userType = 'Salesman';
+                              break;
+                            case '3':
+                              userType = 'Engineer';
+                              break;
+                            default:
+                              userType = 'Unknown';
+                          }
+
+                          return Text(
+                            userType,
+                            style: TextStyles.kRegularMontserrat(
+                              fontSize: FontSizes.k12FontSize,
+                              color: kColorWhite.withOpacity(0.8),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: visibleMenuItems.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: AppPaddings.p20,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.lock_outline,
+                              size: 48,
+                              color: kColorDarkGrey.withOpacity(0.5),
+                            ),
+                            AppSpaces.h16,
+                            Text(
+                              'No Access',
+                              style: TextStyles.kSemiBoldMontserrat(
+                                fontSize: FontSizes.k16FontSize,
+                                color: kColorDarkGrey,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            AppSpaces.h8,
+                            Text(
+                              'Contact your administrator',
+                              style: TextStyles.kRegularMontserrat(
+                                fontSize: FontSizes.k14FontSize,
+                                color: kColorDarkGrey,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      backgroundColor: kColorWhite,
+                      color: kColorPrimary,
+                      strokeWidth: 2.5,
+                      onRefresh: () async {
+                        await _homeController.checkAppVersion();
+                        await _homeController.getUserAccess();
+                      },
+                      child: ListView.builder(
+                        padding: AppPaddings.custom(top: 8, bottom: 8),
+                        itemCount: visibleMenuItems.length,
+                        itemBuilder: (context, index) {
+                          final menu = visibleMenuItems[index];
+                          return Obx(() {
+                            final isExpanded =
+                                _homeController.expandedMenuIndex.value ==
+                                index;
+                            final hasSubMenus =
+                                menu.subMenus != null &&
+                                menu.subMenus!.isNotEmpty;
+
+                            return Column(
+                              children: [
+                                SidebarMenuItem(
+                                  menu: menu,
+                                  isSelected:
+                                      _homeController.selectedMenuIndex.value ==
+                                      index,
+                                  isExpanded: isExpanded,
+                                  hasSubMenus: hasSubMenus,
+                                  onTap: () {
+                                    if (hasSubMenus) {
+                                      _homeController.toggleMenuExpansion(
+                                        index,
+                                      );
+                                    } else {
+                                      _homeController.selectedMenuIndex.value =
+                                          index;
+                                      if (menu.onTap != null) {
+                                        menu.onTap!();
+                                      }
+                                    }
+                                  },
+                                ),
+                                if (hasSubMenus && isExpanded)
+                                  ...menu.subMenus!.map((subMenu) {
+                                    return SubMenuItem(
+                                      menu: subMenu,
+                                      onTap: () {
+                                        if (subMenu.onTap != null) {
+                                          subMenu.onTap!();
+                                        }
+                                      },
+                                    );
+                                  }),
+                              ],
+                            );
+                          });
+                        },
+                      ),
+                    ),
+            ),
+            Container(
+              padding: AppPaddings.p16,
+
+              child: Center(
+                child: Text(
+                  'v${_homeController.appVersion.value}',
+                  style: TextStyles.kBoldMontserrat(
+                    fontSize: FontSizes.k12FontSize,
+                    color: kColorGrey,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+}

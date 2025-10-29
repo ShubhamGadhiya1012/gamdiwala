@@ -23,13 +23,13 @@ void showErrorSnackbar(String title, String message) {
       title,
       style: TextStyles.kMediumMontserrat(
         color: kColorWhite,
-        fontSize: FontSizes.k20FontSize,
+        fontSize: FontSizes.k16FontSize,
       ),
     ),
     messageText: Text(
       message,
       style: TextStyles.kRegularMontserrat(
-        fontSize: FontSizes.k16FontSize,
+        fontSize: FontSizes.k14FontSize,
         color: kColorWhite,
       ),
     ),
