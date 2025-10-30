@@ -172,8 +172,7 @@ class CartController extends GetxController {
 
       double amount = 0;
       if (cartItem.usesCaratSystem) {
-        double actualQty = nosCount * (cartItem.caratQty / cartItem.caratNos);
-        amount = cartItem.rate * actualQty;
+        amount = cartItem.rate * nosCount;
       } else {
         amount = cartItem.rate * qty;
       }
@@ -236,8 +235,7 @@ class CartController extends GetxController {
     required double nosCount,
   }) {
     if (item.usesCaratSystem) {
-      double actualQty = nosCount * (item.caratQty / item.caratNos);
-      return item.rate * actualQty;
+      return item.rate * nosCount;
     } else {
       return item.rate * qty;
     }

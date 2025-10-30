@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
@@ -71,10 +69,7 @@ class _CartItemCardState extends State<CartItemCard> {
 
   void _calculateAmount() {
     if (widget.cartItem.usesCaratSystem) {
-      double nos = nosCount.value;
-      double actualQty =
-          nos * (widget.cartItem.caratQty / widget.cartItem.caratNos);
-      totalAmount.value = widget.cartItem.rate * actualQty;
+      totalAmount.value = nosCount.value * widget.cartItem.rate;
     } else {
       totalAmount.value = widget.cartItem.rate * qty.value;
     }
