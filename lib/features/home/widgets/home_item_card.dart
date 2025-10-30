@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
@@ -155,9 +153,7 @@ class _HomeItemCardState extends State<HomeItemCard> {
 
   void _calculateAmount() {
     if (widget.item.usesCaratSystem) {
-      double nos = nosCount.value;
-      double actualQty = nos * (widget.item.caratQty / widget.item.caratNos);
-      totalAmount.value = widget.item.rate * actualQty;
+      totalAmount.value = nosCount.value * widget.item.rate;
     } else {
       totalAmount.value = widget.item.rate * qty.value;
     }
