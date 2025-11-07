@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/features/challan_entry/controllers/challan_entry_controller.dart';
@@ -11,6 +9,7 @@ import 'package:gamdiwala/utils/screen_utils/app_paddings.dart';
 import 'package:gamdiwala/utils/screen_utils/app_spacings.dart';
 import 'package:gamdiwala/widgets/app_button.dart';
 import 'package:gamdiwala/widgets/app_date_picker_text_form_field.dart';
+import 'package:gamdiwala/widgets/app_dropdown.dart';
 import 'package:gamdiwala/widgets/app_loading_overlay.dart';
 import 'package:get/get.dart';
 
@@ -21,43 +20,10 @@ class ChallanEntryScreen extends StatefulWidget {
   State<ChallanEntryScreen> createState() => _ChallanEntryScreenState();
 }
 
-class _ChallanEntryScreenState extends State<ChallanEntryScreen>
-    with SingleTickerProviderStateMixin {
+class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
   final ChallanController _controller = Get.put(ChallanController());
   String? _expandedCardKey;
   String? _selectedCardKey;
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(_onTabChanged);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _controller.loadTodayOrders();
-    });
-  }
-
-  @override
-  void dispose() {
-    _tabController.removeListener(_onTabChanged);
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  void _onTabChanged() {
-    if (!_tabController.indexIsChanging) {
-      setState(() {
-        _expandedCardKey = null;
-        _selectedCardKey = null;
-      });
-
-      _controller.loadOrdersByStatus(
-        _tabController.index == 0 ? 'PENDING' : 'COMPLETE',
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,36 +60,32 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen>
           ),
           body: Column(
             children: [
-              _buildDatePickerSection(),
-              _buildTabBar(),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildOrdersList(isPending: true),
-                    _buildOrdersList(isPending: false),
-                  ],
-                ),
-              ),
+              _buildFilterSection(),
+              Expanded(child: _buildOrdersList()),
             ],
           ),
-          floatingActionButton:
-              _selectedCardKey != null && _tabController.index == 0
-              ? FloatingActionButton.extended(
-                  onPressed: _showChallanDateDialog,
-                  label: Text('Challan Entry'),
-                  foregroundColor: kColorWhite,
-                  icon: Icon(Icons.check),
-                  backgroundColor: kColorPrimary,
-                )
-              : null,
+          floatingActionButton: Obx(() {
+            final isPending =
+                _controller.selectedStatus.value == 'Pending Challan';
+
+            if (_selectedCardKey != null && isPending) {
+              return FloatingActionButton.extended(
+                onPressed: _showChallanDateDialog,
+                label: Text('Challan Entry'),
+                foregroundColor: kColorWhite,
+                icon: Icon(Icons.check),
+                backgroundColor: kColorPrimary,
+              );
+            }
+            return SizedBox.shrink();
+          }),
         ),
         Obx(() => AppLoadingOverlay(isLoading: _controller.isLoading.value)),
       ],
     );
   }
 
-  Widget _buildDatePickerSection() {
+  Widget _buildFilterSection() {
     return Container(
       padding: AppPaddings.p16,
       decoration: BoxDecoration(
@@ -136,55 +98,47 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen>
           ),
         ],
       ),
-      child: AppDatePickerTextFormField(
-        dateController: _controller.orderDateController,
-        hintText: 'Order Date',
-        onChanged: (date) {
-          if (date.isNotEmpty) {
-            setState(() {
-              _expandedCardKey = null;
-              _selectedCardKey = null;
-            });
-            _controller.searchOrders();
-          }
-        },
-      ),
-    );
-  }
-
-  Widget _buildTabBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: kColorWhite,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+      child: Column(
+        children: [
+          AppDatePickerTextFormField(
+            dateController: _controller.orderDateController,
+            hintText: 'Order Date',
+            onChanged: (date) {
+              if (date.isNotEmpty) {
+                setState(() {
+                  _expandedCardKey = null;
+                  _selectedCardKey = null;
+                });
+                _controller.searchOrders();
+              }
+            },
+          ),
+          AppSpaces.v12,
+          Obx(
+            () => AppDropdown(
+              items: _controller.statusOptions,
+              hintText: 'Choose Status',
+              onChanged: (value) {
+                setState(() {
+                  _expandedCardKey = null;
+                  _selectedCardKey = null;
+                });
+                _controller.onStatusChanged(value);
+              },
+              selectedItem: _controller.selectedStatus.value.isNotEmpty
+                  ? _controller.selectedStatus.value
+                  : null,
+              validatorText: 'Please select a status',
+            ),
           ),
         ],
       ),
-      child: TabBar(
-        controller: _tabController,
-        indicatorColor: kColorPrimary,
-        labelColor: kColorPrimary,
-        unselectedLabelColor: kColorDarkGrey,
-        labelStyle: TextStyles.kSemiBoldMontserrat(
-          fontSize: FontSizes.k14FontSize,
-        ),
-        unselectedLabelStyle: TextStyles.kMediumMontserrat(
-          fontSize: FontSizes.k14FontSize,
-        ),
-        tabs: const [
-          Tab(text: 'Pending Challan'),
-          Tab(text: 'Completed Challan'),
-        ],
-      ),
     );
   }
 
-  Widget _buildOrdersList({required bool isPending}) {
+  Widget _buildOrdersList() {
     return Obx(() {
+      final isPending = _controller.selectedStatus.value == 'Pending Challan';
       final orders = isPending
           ? _controller.pendingOrders
           : _controller.completedOrders;
@@ -227,50 +181,75 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen>
         color: kColorPrimary,
         strokeWidth: 2.5,
         onRefresh: () async {
-          await _controller.loadOrdersByStatus(
-            isPending ? 'PENDING' : 'COMPLETE',
-          );
+          final status = isPending ? 'PENDING' : 'COMPLETE';
+          await _controller.loadOrdersByStatus(status);
           setState(() {
             _expandedCardKey = null;
             _selectedCardKey = null;
           });
         },
-        child: ListView.builder(
-          padding: AppPaddings.p10,
-          itemCount: orders.length,
-          itemBuilder: (context, index) {
-            final order = orders[index];
-            final isSelected = _selectedCardKey == order.invNo;
-
-            return ChallanOrderCard(
-              key: ValueKey(order.invNo),
-              order: order,
-              expandedCardKey: _expandedCardKey,
-              isSelected: isSelected,
-              isPending: isPending,
-              onExpanded: (String? cardKey) {
-                setState(() {
-                  _expandedCardKey = cardKey;
-                });
-              },
-              onLongPress: isPending
-                  ? () {
-                      _handleCardSelection(order.invNo);
-                    }
-                  : null,
-              onSelectionToggle: isPending
-                  ? () {
-                      _handleCardSelection(order.invNo);
-                    }
-                  : null,
-              onTap: () {},
-              onPdfDownload: !isPending
-                  ? () {
-                      _controller.generateChallanPdf(order.challanNo);
-                    }
-                  : null,
-            );
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (scrollNotification) {
+            if (scrollNotification is ScrollEndNotification &&
+                scrollNotification.metrics.extentAfter == 0) {
+              final status = isPending ? 'PENDING' : 'COMPLETE';
+              _controller.loadOrdersByStatus(status, loadMore: true);
+            }
+            return false;
           },
+          child: ListView.builder(
+            padding: AppPaddings.p10,
+            itemCount: orders.length + 1,
+            itemBuilder: (context, index) {
+              // Show loading indicator at the end
+              if (index == orders.length) {
+                return Obx(() {
+                  return _controller.isLoadingMore.value
+                      ? Padding(
+                          padding: AppPaddings.p10,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: kColorPrimary,
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink();
+                });
+              }
+
+              final order = orders[index];
+              final isSelected = _selectedCardKey == order.invNo;
+
+              return ChallanOrderCard(
+                key: ValueKey(order.invNo),
+                order: order,
+                expandedCardKey: _expandedCardKey,
+                isSelected: isSelected,
+                isPending: isPending,
+                onExpanded: (String? cardKey) {
+                  setState(() {
+                    _expandedCardKey = cardKey;
+                  });
+                },
+                onLongPress: isPending
+                    ? () {
+                        _handleCardSelection(order.invNo);
+                      }
+                    : null,
+                onSelectionToggle: isPending
+                    ? () {
+                        _handleCardSelection(order.invNo);
+                      }
+                    : null,
+                onTap: () {},
+                onPdfDownload: !isPending
+                    ? () {
+                        _controller.generateChallanPdf(order.challanNo);
+                      }
+                    : null,
+              );
+            },
+          ),
         ),
       );
     });
