@@ -64,8 +64,6 @@ class HomeController extends GetxController {
     }
   }
 
-  
-
   Future<void> getItems() async {
     isLoading.value = true;
     String? selectPCode = await SecureStorageHelper.read('selectPCode');
@@ -231,7 +229,7 @@ class HomeController extends GetxController {
 
   Future<void> redirectToPlayStore() async {
     const playStoreUrl =
-        'https://play.google.com/store/apps/details?id=com.jinee.jct';
+        'https://play.google.com/store/apps/details?id=com.jinee.gamdiwala';
 
     final uri = Uri.parse(playStoreUrl);
     if (await canLaunchUrl(uri)) {

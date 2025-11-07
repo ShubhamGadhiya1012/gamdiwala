@@ -46,11 +46,9 @@ class ChallanController extends GetxController {
     try {
       final fetchedParties = await SelectPartyRepo.getCustomers();
 
-      // Add "All" option at the beginning
       final allParty = PartyDm(pCode: '', pName: 'All');
       parties.assignAll([allParty, ...fetchedParties]);
 
-      // Set "All" as default selected
       selectedParty.value = allParty;
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
