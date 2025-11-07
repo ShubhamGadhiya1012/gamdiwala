@@ -116,6 +116,22 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
           AppSpaces.v12,
           Obx(
             () => AppDropdown(
+              items: _controller.parties.map((party) => party.pName).toList(),
+              hintText: 'Choose Party',
+              onChanged: (value) {
+                setState(() {
+                  _expandedCardKey = null;
+                  _selectedCardKey = null;
+                });
+                _controller.onPartyChanged(value);
+              },
+              selectedItem: _controller.selectedParty.value?.pName,
+              validatorText: 'Please select a party',
+            ),
+          ),
+          AppSpaces.v12,
+          Obx(
+            () => AppDropdown(
               items: _controller.statusOptions,
               hintText: 'Choose Status',
               onChanged: (value) {
@@ -201,7 +217,6 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
             padding: AppPaddings.p10,
             itemCount: orders.length + 1,
             itemBuilder: (context, index) {
-              // Show loading indicator at the end
               if (index == orders.length) {
                 return Obx(() {
                   return _controller.isLoadingMore.value

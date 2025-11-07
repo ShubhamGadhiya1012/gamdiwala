@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gamdiwala/features/authentication/auth/models/party_dm.dart';
+import 'package:gamdiwala/features/authentication/auth/repos/select_party_repo.dart';
 import 'package:gamdiwala/features/challan_entry/models/order_dm.dart';
 import 'package:gamdiwala/features/challan_entry/repos/challan_entry_repo.dart';
 import 'package:gamdiwala/features/challan_entry/screens/challan_pdf_screen.dart';
@@ -23,11 +25,13 @@ class ChallanController extends GetxController {
   var currentPage = 1;
   var pageSize = 5;
   var isFetchingData = false;
-
+  var parties = <PartyDm>[].obs;
+  var selectedParty = Rxn<PartyDm>();
   @override
   void onInit() {
     super.onInit();
     orderDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
+    getParties();
   }
 
   @override
@@ -37,8 +41,33 @@ class ChallanController extends GetxController {
     super.onClose();
   }
 
+  Future<void> getParties() async {
+    isLoading.value = true;
+    try {
+      final fetchedParties = await SelectPartyRepo.getCustomers();
+
+      // Add "All" option at the beginning
+      final allParty = PartyDm(pCode: '', pName: 'All');
+      parties.assignAll([allParty, ...fetchedParties]);
+
+      // Set "All" as default selected
+      selectedParty.value = allParty;
+    } catch (e) {
+      showErrorSnackbar('Error', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void onPartyChanged(String? pName) {
+    if (pName != null) {
+      selectedParty.value = parties.firstWhere((party) => party.pName == pName);
+      searchOrders();
+    }
+  }
+
   Future<void> searchOrders() async {
-    if (selectedStatus.value.isEmpty) return;
+    if (selectedStatus.value.isEmpty || selectedParty.value == null) return;
 
     String status = selectedStatus.value == 'Pending Challan'
         ? 'PENDING'
@@ -84,6 +113,7 @@ class ChallanController extends GetxController {
         status: status,
         pageNumber: currentPage,
         pageSize: pageSize,
+        pCode: selectedParty.value?.pCode ?? '',
       );
 
       if (fetchedOrders.isNotEmpty) {

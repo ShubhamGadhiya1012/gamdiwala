@@ -8,8 +8,11 @@ class ChallanRepo {
     required String status,
     int pageNumber = 1,
     int pageSize = 10,
+    required String pCode,
   }) async {
     String? token = await SecureStorageHelper.read('token');
+
+    print(pCode);
 
     final response = await ApiService.getRequest(
       endpoint: '/Challan/getOrders',
@@ -19,6 +22,7 @@ class ChallanRepo {
         'Status': status,
         'PageNumber': pageNumber.toString(),
         'PageSize': pageSize.toString(),
+        'PCode': pCode,
       },
     );
     print(response);
