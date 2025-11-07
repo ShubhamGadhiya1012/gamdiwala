@@ -13,6 +13,7 @@ import 'package:gamdiwala/utils/screen_utils/app_paddings.dart';
 import 'package:gamdiwala/utils/screen_utils/app_spacings.dart';
 import 'package:gamdiwala/widgets/app_appbar.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -236,6 +237,24 @@ class _ProfileScreenState extends State<ProfileScreen>
                 title: 'Change Party',
                 onTap: () {
                   Get.offAll(() => SelectPartyScreen());
+                },
+              ),
+              AppSpaces.v14,
+              _buildAnimatedMenuTile(
+                delay: 200,
+                icon: Icons.arrow_circle_up_rounded,
+                title: 'Check For Update',
+                onTap: () async {
+                  const url =
+                      'https://play.google.com/store/apps/details?id=com.jinee.gamdiwala';
+                  if (await canLaunchUrl(Uri.parse(url))) {
+                    await launchUrl(
+                      Uri.parse(url),
+                      mode: LaunchMode.externalApplication,
+                    );
+                  } else {
+                    print('Could not launch $url');
+                  }
                 },
               ),
               AppSpaces.v14,

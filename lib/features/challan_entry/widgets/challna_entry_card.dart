@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/features/challan_entry/models/order_dm.dart';
@@ -121,16 +119,29 @@ class _ChallanOrderCardState extends State<ChallanOrderCard> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 AppSpaces.h6,
+
+                if (widget.order.challanNo.isNotEmpty) ...[
+                  Text(
+                    'Challan No: ${widget.order.challanNo}',
+                    style: TextStyles.kBoldMontserrat(
+                      fontSize: FontSizes.k14FontSize,
+                      color: kColorTextPrimary,
+                    ),
+                  ),
+                  AppSpaces.h4,
+                ],
+
                 Text(
-                  'Invoice No: ${widget.order.invNo}',
+                  'Order No: ${widget.order.invNo}',
                   style: TextStyles.kMediumMontserrat(
-                    fontSize: FontSizes.k12FontSize,
+                    fontSize: FontSizes.k10FontSize,
                     color: kColorDarkGrey,
                   ),
                 ),
               ],
             ),
           ),
+
           AppSpaces.h12,
           Column(
             children: [

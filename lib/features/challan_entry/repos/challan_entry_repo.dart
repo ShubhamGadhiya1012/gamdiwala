@@ -61,7 +61,7 @@ class ChallanRepo {
         queryParams: {'Invno': challanNo},
       );
 
-      // print(response);
+      print(response);
       return response;
     } catch (e) {
       rethrow;
