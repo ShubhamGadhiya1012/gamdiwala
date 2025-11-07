@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/constants/image_constants.dart';
+import 'package:gamdiwala/features/authentication/auth/screens/select_party_screen.dart';
 import 'package:gamdiwala/features/home/controllers/home_controller.dart';
 import 'package:gamdiwala/features/home/controllers/cart_controller.dart';
 import 'package:gamdiwala/features/home/screens/cart_screen.dart';
@@ -35,6 +36,8 @@ class HomeScreen extends StatelessWidget {
           body: Column(
             children: [
               _buildAppBar(context),
+              _buildPartySection(),
+
               Expanded(
                 child: Container(
                   color: Colors.grey[50],
@@ -454,6 +457,42 @@ class HomeScreen extends StatelessWidget {
           ],
         );
       }),
+    );
+  }
+
+  Widget _buildPartySection() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: kColorWhite,
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!, width: 1)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.business_outlined, color: kColorPrimary, size: 20),
+          AppSpaces.h8,
+          Expanded(
+            child: Obx(
+              () => Text(
+                _homeController.partyName.value,
+                style: TextStyles.kSemiBoldMontserrat(
+                  fontSize: FontSizes.k14FontSize,
+                  color: kColorTextPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.swap_horiz, color: kColorPrimary),
+            onPressed: () {
+              Get.offAll(() => SelectPartyScreen());
+            },
+            tooltip: 'Change Party',
+          ),
+        ],
+      ),
     );
   }
 }

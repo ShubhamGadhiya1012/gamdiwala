@@ -36,6 +36,7 @@ class HomeController extends GetxController {
 
   var fullName = ''.obs;
   var userType = ''.obs;
+  var partyName = ''.obs;
 
   @override
   void onInit() async {
@@ -53,6 +54,8 @@ class HomeController extends GetxController {
     try {
       fullName.value = await SecureStorageHelper.read('fullName') ?? 'Unknown';
       userType.value = await SecureStorageHelper.read('userType') ?? 'guest';
+      String? pName = await SecureStorageHelper.read('selectPName');
+      partyName.value = pName ?? 'No Party Selected';
     } catch (e) {
       showErrorSnackbar(
         'Failed to Load User Info',
@@ -60,6 +63,8 @@ class HomeController extends GetxController {
       );
     }
   }
+
+  
 
   Future<void> getItems() async {
     isLoading.value = true;

@@ -331,22 +331,51 @@ class _HomeItemCardState extends State<HomeItemCard> {
             ),
             AppSpaces.h8,
             Wrap(
-              spacing: 16,
-              runSpacing: 8,
+              spacing: 6,
+              runSpacing: 6,
               children: [
                 _buildInfo(
                   'Unit',
                   widget.item.unit.isEmpty ? 'N/A' : widget.item.unit,
+                  Icons.straighten_outlined,
                 ),
-                _buildInfo('Rate', '₹${widget.item.rate}'),
-                _buildInfo('PackQty', widget.item.packQty.toString()),
+                _buildInfo(
+                  'Rate',
+                  '₹${widget.item.rate}',
+                  Icons.currency_rupee,
+                ),
+                _buildInfo(
+                  'PackQty',
+                  widget.item.packQty.toString(),
+                  Icons.inventory_2_outlined,
+                ),
                 if (widget.item.usesCaratSystem) ...[
-                  _buildInfo('CaratNos', widget.item.caratNos.toString()),
-                  _buildInfo('CaratQty', widget.item.caratQty.toString()),
+                  _buildInfo(
+                    'CaratNos',
+                    widget.item.caratNos.toString(),
+                    Icons.diamond_outlined,
+                  ),
+                  _buildInfo(
+                    'CaratQty',
+                    widget.item.caratQty.toString(),
+                    Icons.scale_outlined,
+                  ),
                 ],
-                _buildInfo('ItemPack', widget.item.itemPack.toString()),
-                _buildInfo('FAT', widget.item.fat.toStringAsFixed(3)),
-                _buildInfo('LR', widget.item.lr.toStringAsFixed(3)),
+                _buildInfo(
+                  'ItemPack',
+                  widget.item.itemPack.toString(),
+                  Icons.widgets_outlined,
+                ),
+                _buildInfo(
+                  'FAT',
+                  widget.item.fat.toStringAsFixed(3),
+                  Icons.water_drop_outlined,
+                ),
+                _buildInfo(
+                  'LR',
+                  widget.item.lr.toStringAsFixed(3),
+                  Icons.local_shipping_outlined,
+                ),
               ],
             ),
             AppSpaces.v12,
@@ -712,25 +741,35 @@ class _HomeItemCardState extends State<HomeItemCard> {
     );
   }
 
-  Widget _buildInfo(String title, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyles.kRegularMontserrat(
-            fontSize: FontSizes.k12FontSize,
-            color: Colors.grey.shade600,
+  Widget _buildInfo(String title, String value, IconData icon) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: kColorPrimary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: kColorPrimary.withOpacity(0.1), width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: kColorPrimary),
+          SizedBox(width: 6),
+          Text(
+            '$title: ',
+            style: TextStyles.kRegularMontserrat(
+              fontSize: FontSizes.k12FontSize,
+              color: kColorDarkGrey,
+            ),
           ),
-        ),
-        Text(
-          value,
-          style: TextStyles.kSemiBoldMontserrat(
-            fontSize: FontSizes.k14FontSize,
-            color: kColorTextPrimary,
+          Text(
+            value,
+            style: TextStyles.kSemiBoldMontserrat(
+              fontSize: FontSizes.k12FontSize,
+              color: kColorTextPrimary,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

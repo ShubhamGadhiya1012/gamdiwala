@@ -6,15 +6,26 @@ class ChallanRepo {
   static Future<List<ChallanOrderDm>> getOrders({
     required String date,
     required String status,
+    int pageNumber = 1,
+    int pageSize = 10,
+    required String pCode,
   }) async {
     String? token = await SecureStorageHelper.read('token');
+
+    print(pCode);
 
     final response = await ApiService.getRequest(
       endpoint: '/Challan/getOrders',
       token: token,
-      queryParams: {'Date': date, 'Status': status},
+      queryParams: {
+        'Date': date,
+        'Status': status,
+        'PageNumber': pageNumber.toString(),
+        'PageSize': pageSize.toString(),
+        'PCode': pCode,
+      },
     );
-
+    print(response);
     if (response == null || response['data'] == null) return [];
 
     return (response['data'] as List)
@@ -36,7 +47,7 @@ class ChallanRepo {
       'PCode': pCode,
       'VCode': vCode,
     };
-    // print(body);
+
     try {
       final response = await ApiService.postRequest(
         endpoint: '/Challan/challanEntry',
@@ -61,7 +72,7 @@ class ChallanRepo {
         queryParams: {'Invno': challanNo},
       );
 
-      // print(response);
+      print(response);
       return response;
     } catch (e) {
       rethrow;
