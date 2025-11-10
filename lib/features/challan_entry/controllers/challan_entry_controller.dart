@@ -117,6 +117,9 @@ class ChallanController extends GetxController {
       if (fetchedOrders.isNotEmpty) {
         if (status == 'PENDING') {
           pendingOrders.addAll(fetchedOrders);
+          for (var ord in pendingOrders) {
+            print(ord.invNo);
+          }
         } else {
           completedOrders.addAll(fetchedOrders);
         }
@@ -135,6 +138,29 @@ class ChallanController extends GetxController {
       isLoading.value = false;
       isFetchingData = false;
       isLoadingMore.value = false;
+    }
+  }
+
+  Future<bool> updateOrder(String invNo, String flag) async {
+    isLoading.value = true;
+    try {
+      final response = await ChallanRepo.updateChallanOrder(
+        invNo: invNo,
+        flag: flag,
+      );
+
+      if (response != null && response.containsKey('message')) {
+        String message = response['message'];
+        showSuccessSnackbar('Success', message);
+        await loadOrdersByStatus('PENDING');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      showErrorSnackbar('Error', e.toString());
+      return false;
+    } finally {
+      isLoading.value = false;
     }
   }
 
