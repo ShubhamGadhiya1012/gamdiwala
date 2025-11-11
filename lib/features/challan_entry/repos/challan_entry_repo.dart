@@ -7,7 +7,7 @@ class ChallanRepo {
     required String date,
     required String status,
     int pageNumber = 1,
-    int pageSize = 10,
+    int pageSize = 5,
     required String pCode,
   }) async {
     String? token = await SecureStorageHelper.read('token');
@@ -25,12 +25,31 @@ class ChallanRepo {
         'PCode': pCode,
       },
     );
-    print(response);
+
     if (response == null || response['data'] == null) return [];
 
     return (response['data'] as List)
         .map((item) => ChallanOrderDm.fromJson(item))
         .toList();
+  }
+
+  static Future<dynamic> updateChallanOrder({
+    required String invNo,
+    required String flag,
+  }) async {
+    String? token = await SecureStorageHelper.read('token');
+
+    try {
+      final response = await ApiService.postRequest(
+        endpoint: '/Cart/updateDeleteOrder',
+        token: token,
+        requestBody: {'Invno': invNo, 'Flag': flag},
+      );
+
+      return response;
+    } catch (e) {
+      rethrow;
+    }
   }
 
   static Future<dynamic> saveChallanEntry({

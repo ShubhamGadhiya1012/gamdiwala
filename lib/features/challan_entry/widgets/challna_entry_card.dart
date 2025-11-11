@@ -17,6 +17,8 @@ class ChallanOrderCard extends StatefulWidget {
   final VoidCallback? onSelectionToggle;
   final bool isPending;
   final VoidCallback? onPdfDownload;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const ChallanOrderCard({
     super.key,
@@ -29,6 +31,8 @@ class ChallanOrderCard extends StatefulWidget {
     this.onSelectionToggle,
     this.isPending = true,
     this.onPdfDownload,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -100,7 +104,7 @@ class _ChallanOrderCardState extends State<ChallanOrderCard> {
                     ),
                   ),
                   child: widget.isSelected
-                      ? Icon(Icons.check, size: 16, color: Colors.white)
+                      ? Icon(Icons.check, size: 16, color: kColorWhite)
                       : null,
                 ),
               ),
@@ -162,6 +166,46 @@ class _ChallanOrderCardState extends State<ChallanOrderCard> {
                       ),
                     ),
                   ),
+                  if (widget.isPending &&
+                      (widget.onEdit != null || widget.onDelete != null)) ...[
+                    AppSpaces.h8,
+                    if (widget.onEdit != null)
+                      GestureDetector(
+                        onTap: widget.onEdit,
+                        child: Container(
+                          padding: AppPaddings.p8,
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.orange.shade300),
+                          ),
+                          child: Icon(
+                            Icons.edit,
+                            color: Colors.orange.shade700,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    if (widget.onDelete != null) ...[
+                      AppSpaces.h8,
+                      GestureDetector(
+                        onTap: widget.onDelete,
+                        child: Container(
+                          padding: AppPaddings.p8,
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.red.shade300),
+                          ),
+                          child: Icon(
+                            Icons.delete,
+                            color: Colors.red.shade700,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                   if (!widget.isPending) ...[
                     AppSpaces.h8,
                     GestureDetector(

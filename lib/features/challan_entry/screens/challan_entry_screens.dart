@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/features/challan_entry/controllers/challan_entry_controller.dart';
 import 'package:gamdiwala/features/challan_entry/widgets/challna_entry_card.dart';
+import 'package:gamdiwala/features/home/screens/home_screen.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
 import 'package:gamdiwala/styles/text_styles.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
@@ -11,6 +12,7 @@ import 'package:gamdiwala/widgets/app_button.dart';
 import 'package:gamdiwala/widgets/app_date_picker_text_form_field.dart';
 import 'package:gamdiwala/widgets/app_dropdown.dart';
 import 'package:gamdiwala/widgets/app_loading_overlay.dart';
+import 'package:gamdiwala/widgets/app_text_button.dart';
 import 'package:get/get.dart';
 
 class ChallanEntryScreen extends StatefulWidget {
@@ -262,6 +264,45 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
                         _controller.generateChallanPdf(order.challanNo);
                       }
                     : null,
+                onEdit: isPending
+                    ? () {
+                        _showActionConfirmDialog(
+                          action: 'Edit',
+                          invNo: order.invNo,
+                          onConfirm: () async {
+                            Get.back();
+                            final success = await _controller.updateOrder(
+                              order.invNo,
+                              'isEdit',
+                            );
+                            if (success) {
+                              Get.offAll(() => HomeScreen());
+                            }
+                          },
+                        );
+                      }
+                    : null,
+                onDelete: isPending
+                    ? () {
+                        _showActionConfirmDialog(
+                          action: 'Delete',
+                          invNo: order.invNo,
+                          onConfirm: () async {
+                            Get.back();
+                            final success = await _controller.updateOrder(
+                              order.invNo,
+                              'isDelete',
+                            );
+                            if (success) {
+                              setState(() {
+                                _expandedCardKey = null;
+                                _selectedCardKey = null;
+                              });
+                            }
+                          },
+                        );
+                      }
+                    : null,
               );
             },
           ),
@@ -346,6 +387,78 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showActionConfirmDialog({
+    required String action,
+    required String invNo,
+    required VoidCallback onConfirm,
+  }) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: kColorWhite,
+        child: Container(
+          padding: AppPaddings.p24,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                action == 'Edit' ? Icons.edit : Icons.delete_forever,
+                size: 60,
+                color: action == 'Edit' ? kColorBlue : kColorRed,
+              ),
+              AppSpaces.v20,
+              Text(
+                '$action Order',
+                style: TextStyles.kBoldMontserrat(
+                  fontSize: FontSizes.k20FontSize,
+                  color: kColorTextPrimary,
+                ),
+              ),
+              AppSpaces.v12,
+              Text(
+                'Are you sure you want to $action this order?\nAfter, You can’t undo this action.',
+                style: TextStyles.kRegularMontserrat(
+                  fontSize: FontSizes.k16FontSize,
+                  color: kColorDarkGrey,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              AppSpaces.v8,
+              Text(
+                'Order No: $invNo',
+                style: TextStyles.kSemiBoldMontserrat(
+                  fontSize: FontSizes.k14FontSize,
+                  color: kColorTextPrimary,
+                ),
+              ),
+              AppSpaces.v24,
+              Row(
+                children: [
+                  Expanded(
+                    child: AppTextButton(
+                      onPressed: () => Get.back(),
+                      title: 'Cancel',
+                      color: kColorDarkGrey,
+                    ),
+                  ),
+                  AppSpaces.h16,
+                  Expanded(
+                    child: AppButton(
+                      onPressed: onConfirm,
+                      title: 'Yes, $action',
+                      titleSize: 14,
+                      buttonColor: action == 'Edit' ? kColorBlue : kColorRed,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
