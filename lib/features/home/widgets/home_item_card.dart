@@ -215,16 +215,19 @@ class _HomeItemCardState extends State<HomeItemCard> {
     if (value.isEmpty) {
       nosCount.value = 0;
       isNosManuallySet.value = false;
+      caratCount.value = 0;
+      caratController.text = '';
     } else {
       double nos = double.tryParse(value) ?? 0;
-      if (nos > 0) {
-        nosCount.value = nos;
-        isNosManuallySet.value = true;
-        caratCount.value = nos / widget.item.caratNos;
+      nosCount.value = nos;
+      isNosManuallySet.value = true;
+      caratCount.value = (nos / widget.item.caratNos).ceilToDouble();
 
-        if (caratController.text != caratCount.value.toStringAsFixed(0)) {
-          caratController.text = caratCount.value.toStringAsFixed(0);
-        }
+      if (caratController.text != caratCount.value.toStringAsFixed(0)) {
+        caratController.text = caratCount.value.toStringAsFixed(0);
+      }
+
+      if (nos > 0) {
         _addOrUpdateCart();
       }
     }
@@ -322,12 +325,31 @@ class _HomeItemCardState extends State<HomeItemCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              widget.item.iName,
-              style: TextStyles.kSemiBoldMontserrat(
-                fontSize: FontSizes.k16FontSize,
-                color: kColorTextPrimary,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.item.iName,
+                    style: TextStyles.kSemiBoldMontserrat(
+                      fontSize: FontSizes.k16FontSize,
+                      color: kColorTextPrimary,
+                    ),
+                  ),
+                ),
+                if (isInCart)
+                  InkWell(
+                    onTap: () => _showDeleteConfirmation(),
+                    child: Container(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.delete_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             AppSpaces.h8,
             Wrap(
