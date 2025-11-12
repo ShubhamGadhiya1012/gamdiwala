@@ -4,6 +4,7 @@ class ChallanOrderDm {
   final String pName;
   final String vCode;
   final String challanNo;
+  final String hasSaleBill;
   final List<ChallanOrderItemDm> orderItems;
 
   ChallanOrderDm({
@@ -12,6 +13,7 @@ class ChallanOrderDm {
     required this.pName,
     required this.vCode,
     required this.challanNo,
+    required this.hasSaleBill,
     required this.orderItems,
   });
 
@@ -22,6 +24,7 @@ class ChallanOrderDm {
       pName: json['pName'] ?? '',
       vCode: json['vCode'] ?? '',
       challanNo: json['challanNo'] ?? '',
+      hasSaleBill: json['hasSaleBill'] ?? 'NO',
       orderItems:
           (json['orderItems'] as List?)
               ?.map((item) => ChallanOrderItemDm.fromJson(item))
@@ -36,6 +39,8 @@ class ChallanOrderDm {
       'pCode': pCode,
       'pName': pName,
       'vCode': vCode,
+      'challanNo': challanNo,
+      'hasSaleBill': hasSaleBill,
       'orderItems': orderItems.map((item) => item.toJson()).toList(),
     };
   }

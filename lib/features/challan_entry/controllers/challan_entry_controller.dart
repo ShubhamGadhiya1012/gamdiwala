@@ -164,6 +164,26 @@ class ChallanController extends GetxController {
     }
   }
 
+  Future<bool> deleteChallan(String challanNo) async {
+    isLoading.value = true;
+    try {
+      final response = await ChallanRepo.deleteChallan(challanNo: challanNo);
+
+      if (response != null && response.containsKey('message')) {
+        String message = response['message'];
+        showSuccessSnackbar('Success', message);
+        await loadOrdersByStatus('COMPLETE');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      showErrorSnackbar('Error', e.toString());
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<bool> saveChallanEntry(String selectedInvNo) async {
     if (!challanDateFormKey.currentState!.validate()) return false;
 
