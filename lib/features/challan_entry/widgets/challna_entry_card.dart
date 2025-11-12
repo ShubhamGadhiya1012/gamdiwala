@@ -224,6 +224,26 @@ class _ChallanOrderCardState extends State<ChallanOrderCard> {
                         ),
                       ),
                     ),
+                    // Show delete button only if hasSaleBill is "NO"
+                    if (widget.order.hasSaleBill.toUpperCase() == 'NO') ...[
+                      AppSpaces.h8,
+                      GestureDetector(
+                        onTap: widget.onDelete,
+                        child: Container(
+                          padding: AppPaddings.p8,
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.red.shade300),
+                          ),
+                          child: Icon(
+                            Icons.delete,
+                            color: Colors.red.shade700,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ],
               ),

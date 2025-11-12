@@ -52,6 +52,23 @@ class ChallanRepo {
     }
   }
 
+  static Future<dynamic> deleteChallan({required String challanNo}) async {
+    String? token = await SecureStorageHelper.read('token');
+
+    try {
+      final response = await ApiService.postRequest(
+        endpoint: '/Challan/deleteChallan',
+        token: token,
+        requestBody: {'ChallanNo': challanNo},
+      );
+      print(challanNo);
+      print(response);
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   static Future<dynamic> saveChallanEntry({
     required String invNos,
     required String date,

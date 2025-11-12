@@ -302,6 +302,24 @@ class _ChallanEntryScreenState extends State<ChallanEntryScreen> {
                           },
                         );
                       }
+                    : (!isPending && order.hasSaleBill.toUpperCase() == 'NO')
+                    ? () {
+                        _showActionConfirmDialog(
+                          action: 'Delete',
+                          invNo: order.challanNo,
+                          onConfirm: () async {
+                            Get.back();
+                            final success = await _controller.deleteChallan(
+                              order.challanNo,
+                            );
+                            if (success) {
+                              setState(() {
+                                _expandedCardKey = null;
+                              });
+                            }
+                          },
+                        );
+                      }
                     : null,
               );
             },
