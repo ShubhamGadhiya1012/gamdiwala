@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:gamdiwala/features/reports/models/challan_repot_dm.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -14,12 +15,20 @@ Future<void> generateChallanReportPDF(
 ) async {
   final pdf = pw.Document();
   final primaryColor = PdfColor.fromHex('#138DB6');
-
   final blackColor = PdfColor.fromHex('#000000');
   final contrastNavy = PdfColor.fromHex('#1E3A8A');
   final lightGray = PdfColor.fromHex('#F8F9FA');
   final headerColor = PdfColor.fromHex('#138DB6');
   final totalRowColor = PdfColor.fromHex('#B2F2C2');
+  final borderColor = PdfColor.fromHex('#D1D5DB');
+
+  // Load custom fonts
+  final fontData = await rootBundle.load('assets/fonts/Montserrat-Regular.ttf');
+  final fontBoldData = await rootBundle.load(
+    'assets/fonts/Montserrat-Bold.ttf',
+  );
+  final ttf = pw.Font.ttf(fontData);
+  final ttfBold = pw.Font.ttf(fontBoldData);
 
   late Map<String, List<ChallanReportDm>> groupedData;
 
@@ -31,26 +40,123 @@ Future<void> generateChallanReportPDF(
     groupedData = _groupDataByItem(data);
   }
 
+  // Calculate grand total
+  final grandTotal = data.fold<double>(0, (sum, item) => sum + item.amount);
+
   pdf.addPage(
     pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(20),
-      header: (context) => pw.Column(
-        children: [
-          _buildHeader(fromDate, toDate, reportType),
-          pw.SizedBox(height: 20),
-        ],
-      ),
-      build: (context) => _buildContent(
-        groupedData,
-        primaryColor,
-        blackColor,
-        lightGray,
-        headerColor,
-        totalRowColor,
-        contrastNavy,
-        reportType,
-      ),
+      theme: pw.ThemeData.withFont(base: ttf, bold: ttfBold),
+      header: (context) => _buildHeaderWidget(fromDate, toDate, reportType),
+      build: (context) {
+        List<pw.Widget> allContent = [];
+
+        // Process each group
+        groupedData.forEach((groupKey, items) {
+          String groupLabel;
+          if (reportType == 'Date Wise') {
+            groupLabel = 'Date: $groupKey';
+          } else if (reportType == 'Customer Wise') {
+            groupLabel = 'Customer: $groupKey';
+          } else {
+            groupLabel = 'Item: $groupKey';
+          }
+
+          // Add group header
+          allContent.add(
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(
+                vertical: 8,
+                horizontal: 12,
+              ),
+              margin: const pw.EdgeInsets.only(bottom: 8, top: 8),
+              decoration: pw.BoxDecoration(
+                color: headerColor,
+                borderRadius: pw.BorderRadius.circular(4),
+              ),
+              child: pw.Text(
+                groupLabel,
+                style: pw.TextStyle(
+                  fontSize: 11,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.white,
+                ),
+              ),
+            ),
+          );
+
+          // Split items into chunks to avoid too many rows in a single table
+          const int chunkSize = 25; // Adjust this based on your needs
+          for (int i = 0; i < items.length; i += chunkSize) {
+            final chunk = items.sublist(
+              i,
+              (i + chunkSize > items.length) ? items.length : i + chunkSize,
+            );
+
+            final isLastChunk = (i + chunkSize >= items.length);
+
+            allContent.add(
+              _buildGroupTable(
+                chunk,
+                primaryColor,
+                blackColor,
+                lightGray,
+                totalRowColor,
+                contrastNavy,
+                reportType,
+                borderColor,
+                showGroupTotal: isLastChunk,
+                groupTotal: isLastChunk
+                    ? items.fold<double>(0, (sum, item) => sum + item.amount)
+                    : 0,
+              ),
+            );
+
+            if (!isLastChunk) {
+              allContent.add(pw.SizedBox(height: 4));
+            }
+          }
+
+          allContent.add(pw.SizedBox(height: 4));
+        });
+
+        // Add grand total at the end
+        allContent.add(
+          pw.Container(
+            padding: const pw.EdgeInsets.all(12),
+            margin: const pw.EdgeInsets.only(top: 8),
+            decoration: pw.BoxDecoration(
+              color: primaryColor,
+              borderRadius: pw.BorderRadius.circular(4),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'GRAND TOTAL',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white,
+                  ),
+                ),
+                pw.Text(
+                  grandTotal.toStringAsFixed(2),
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white,
+                  ),
+                  textAlign: pw.TextAlign.right,
+                ),
+              ],
+            ),
+          ),
+        );
+
+        return allContent;
+      },
       footer: (context) => _buildFooter(context),
     ),
   );
@@ -117,165 +223,86 @@ Map<String, List<ChallanReportDm>> _groupDataByItem(
   return groupedData;
 }
 
-pw.Widget _buildHeader(String fromDate, String toDate, String reportType) {
+pw.Widget _buildHeaderWidget(
+  String fromDate,
+  String toDate,
+  String reportType,
+) {
   final primaryColor = PdfColor.fromHex('#138DB6');
   final formattedDateTime = DateFormat(
     'dd MMM yyyy, hh:mm a',
   ).format(DateTime.now());
 
-  return pw.Container(
-    padding: const pw.EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-    decoration: pw.BoxDecoration(
-      color: primaryColor,
-      borderRadius: pw.BorderRadius.circular(4),
-    ),
-    child: pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+  return pw.Column(
+    children: [
+      pw.Container(
+        padding: const pw.EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: pw.BoxDecoration(
+          color: primaryColor,
+          borderRadius: pw.BorderRadius.circular(4),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text(
-                  'CHALLAN REPORT',
-                  style: pw.TextStyle(
-                    fontSize: 16,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'CHALLAN REPORT',
+                        style: pw.TextStyle(
+                          fontSize: 16,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.white,
+                        ),
+                      ),
+                      pw.SizedBox(height: 2),
+                      pw.Text(
+                        '($reportType)',
+                        style: const pw.TextStyle(
+                          fontSize: 11,
+                          color: PdfColors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                pw.SizedBox(height: 2),
-                pw.Text(
-                  '($reportType)',
-                  style: pw.TextStyle(fontSize: 11, color: PdfColors.white),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text(
+                      'Generated On',
+                      style: const pw.TextStyle(
+                        fontSize: 10,
+                        color: PdfColors.white,
+                      ),
+                    ),
+                    pw.Text(
+                      formattedDateTime,
+                      style: pw.TextStyle(
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.end,
-              children: [
-                pw.Text(
-                  'Generated On',
-                  style: pw.TextStyle(fontSize: 10, color: PdfColors.white),
-                ),
-                pw.Text(
-                  formattedDateTime,
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
-                  ),
-                ),
-              ],
+            pw.SizedBox(height: 4),
+            pw.Text(
+              'From: $fromDate   To: $toDate',
+              style: const pw.TextStyle(fontSize: 12, color: PdfColors.white),
             ),
           ],
         ),
-        pw.SizedBox(height: 4),
-        pw.Text(
-          'From: $fromDate   To: $toDate',
-          style: pw.TextStyle(fontSize: 12, color: PdfColors.white),
-        ),
-      ],
-    ),
+      ),
+      pw.SizedBox(height: 20),
+    ],
   );
-}
-
-List<pw.Widget> _buildContent(
-  Map<String, List<ChallanReportDm>> groupedData,
-  PdfColor primaryColor,
-  PdfColor blackColor,
-  PdfColor lightGray,
-  PdfColor headerColor,
-  PdfColor totalRowColor,
-  PdfColor contrastNavy,
-  String reportType,
-) {
-  List<pw.Widget> content = [];
-
-  groupedData.forEach((groupKey, items) {
-    String groupLabel;
-    if (reportType == 'Date Wise') {
-      groupLabel = 'Date: $groupKey';
-    } else if (reportType == 'Customer Wise') {
-      groupLabel = 'Customer: $groupKey';
-    } else {
-      groupLabel = 'Item: $groupKey';
-    }
-
-    content.add(
-      pw.Container(
-        padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        margin: const pw.EdgeInsets.only(bottom: 8, top: 8),
-        decoration: pw.BoxDecoration(
-          color: headerColor,
-          borderRadius: pw.BorderRadius.circular(4),
-        ),
-        child: pw.Text(
-          groupLabel,
-          style: pw.TextStyle(
-            fontSize: 11,
-            fontWeight: pw.FontWeight.bold,
-            color: PdfColors.white,
-          ),
-        ),
-      ),
-    );
-
-    content.add(
-      _buildGroupTable(
-        items,
-        primaryColor,
-        blackColor,
-        lightGray,
-        totalRowColor,
-        contrastNavy,
-        reportType,
-      ),
-    );
-
-    content.add(pw.SizedBox(height: 4));
-  });
-
-  final grandTotal = groupedData.values
-      .expand((items) => items)
-      .fold<double>(0, (sum, item) => sum + item.amount);
-
-  content.add(
-    pw.Container(
-      padding: const pw.EdgeInsets.all(12),
-      margin: const pw.EdgeInsets.only(top: 8),
-      decoration: pw.BoxDecoration(
-        color: primaryColor,
-        borderRadius: pw.BorderRadius.circular(4),
-      ),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text(
-            'GRAND TOTAL',
-            style: pw.TextStyle(
-              fontSize: 12,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.white,
-            ),
-          ),
-          pw.Text(
-            grandTotal.toStringAsFixed(2),
-            style: pw.TextStyle(
-              fontSize: 12,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.white,
-            ),
-            textAlign: pw.TextAlign.right,
-          ),
-        ],
-      ),
-    ),
-  );
-
-  return content;
 }
 
 pw.Widget _buildGroupTable(
@@ -286,8 +313,10 @@ pw.Widget _buildGroupTable(
   PdfColor totalRowColor,
   PdfColor contrastNavy,
   String reportType,
-) {
-  final borderColor = PdfColor.fromHex('#D1D5DB');
+  PdfColor borderColor, {
+  bool showGroupTotal = true,
+  double groupTotal = 0,
+}) {
   List<pw.TableRow> tableRows = [];
 
   List<String> headers;
@@ -361,28 +390,28 @@ pw.Widget _buildGroupTable(
   tableRows.add(
     pw.TableRow(
       decoration: pw.BoxDecoration(color: contrastNavy),
-      children: headers
-          .map(
-            (header) => pw.Container(
-              padding: const pw.EdgeInsets.all(8),
-              child: pw.Text(
-                header,
-                style: pw.TextStyle(
-                  fontSize: 10,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.white,
-                ),
-              ),
+      children: headers.asMap().entries.map((entry) {
+        final isRightAlign = entry.value == 'Rate' || entry.value == 'Amount';
+        return pw.Container(
+          padding: const pw.EdgeInsets.all(8),
+          alignment: isRightAlign
+              ? pw.Alignment.centerRight
+              : pw.Alignment.centerLeft,
+          child: pw.Text(
+            entry.value,
+            style: pw.TextStyle(
+              fontSize: 10,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.white,
             ),
-          )
-          .toList(),
+          ),
+        );
+      }).toList(),
     ),
   );
 
-  double groupTotal = 0;
   for (int i = 0; i < items.length; i++) {
     final item = items[i];
-    groupTotal += item.amount;
 
     List<pw.Widget> rowCells;
 
@@ -394,16 +423,15 @@ pw.Widget _buildGroupTable(
         _buildCell(item.nos.toString(), blackColor),
         _buildCell(item.pack.toStringAsFixed(2), blackColor),
         _buildCell(item.qty.toStringAsFixed(2), blackColor),
-        // Replace the existing rate and amount cells with these:
         _buildCell(
           item.rate.toStringAsFixed(4),
           blackColor,
-          align: pw.TextAlign.right,
+          isRightAlign: true,
         ),
         _buildCell(
           item.amount.toStringAsFixed(2),
           blackColor,
-          align: pw.TextAlign.right,
+          isRightAlign: true,
         ),
       ];
     } else if (reportType == 'Customer Wise') {
@@ -414,16 +442,15 @@ pw.Widget _buildGroupTable(
         _buildCell(item.nos.toString(), blackColor),
         _buildCell(item.pack.toStringAsFixed(2), blackColor),
         _buildCell(item.qty.toStringAsFixed(2), blackColor),
-        // Replace the existing rate and amount cells with these:
         _buildCell(
           item.rate.toStringAsFixed(4),
           blackColor,
-          align: pw.TextAlign.right,
+          isRightAlign: true,
         ),
         _buildCell(
           item.amount.toStringAsFixed(2),
           blackColor,
-          align: pw.TextAlign.right,
+          isRightAlign: true,
         ),
       ];
     } else {
@@ -434,16 +461,15 @@ pw.Widget _buildGroupTable(
         _buildCell(item.nos.toString(), blackColor),
         _buildCell(item.pack.toStringAsFixed(2), blackColor),
         _buildCell(item.qty.toStringAsFixed(2), blackColor),
-        // Replace the existing rate and amount cells with these:
         _buildCell(
           item.rate.toStringAsFixed(4),
           blackColor,
-          align: pw.TextAlign.right,
+          isRightAlign: true,
         ),
         _buildCell(
           item.amount.toStringAsFixed(2),
           blackColor,
-          align: pw.TextAlign.right,
+          isRightAlign: true,
         ),
       ];
     }
@@ -458,42 +484,45 @@ pw.Widget _buildGroupTable(
     );
   }
 
-  List<pw.Widget> totalCells = List.generate(
-    headers.length - 1,
-    (index) => pw.Container(
-      padding: const pw.EdgeInsets.all(8),
-      decoration: pw.BoxDecoration(color: totalRowColor),
-      child: pw.Text(
-        index == 0 ? 'Group Total' : '',
-        style: pw.TextStyle(
-          fontSize: 10,
-          fontWeight: pw.FontWeight.bold,
-          color: blackColor,
+  if (showGroupTotal) {
+    List<pw.Widget> totalCells = List.generate(
+      headers.length - 1,
+      (index) => pw.Container(
+        padding: const pw.EdgeInsets.all(8),
+        alignment: pw.Alignment.centerLeft,
+        child: pw.Text(
+          index == 0 ? 'Group Total' : '',
+          style: pw.TextStyle(
+            fontSize: 10,
+            fontWeight: pw.FontWeight.bold,
+            color: blackColor,
+          ),
         ),
       ),
-    ),
-  );
+    );
 
-  totalCells.add(
-    pw.Container(
-      padding: const pw.EdgeInsets.all(8),
-      child: pw.Text(
-        groupTotal.toStringAsFixed(2),
-        style: pw.TextStyle(
-          fontSize: 10,
-          fontWeight: pw.FontWeight.bold,
-          color: blackColor,
+    totalCells.add(
+      pw.Container(
+        padding: const pw.EdgeInsets.all(8),
+        alignment: pw.Alignment.centerRight,
+        child: pw.Text(
+          groupTotal.toStringAsFixed(2),
+          style: pw.TextStyle(
+            fontSize: 10,
+            fontWeight: pw.FontWeight.bold,
+            color: blackColor,
+          ),
         ),
-        textAlign: pw.TextAlign.right,
       ),
-    ),
-  );
-  tableRows.add(
-    pw.TableRow(
-      decoration: pw.BoxDecoration(color: totalRowColor),
-      children: totalCells,
-    ),
-  );
+    );
+
+    tableRows.add(
+      pw.TableRow(
+        decoration: pw.BoxDecoration(color: totalRowColor),
+        children: totalCells,
+      ),
+    );
+  }
 
   return pw.Table(
     border: pw.TableBorder.all(color: borderColor, width: 0.5),
@@ -502,18 +531,13 @@ pw.Widget _buildGroupTable(
   );
 }
 
-pw.Widget _buildCell(
-  String text,
-  PdfColor color, {
-  pw.TextAlign align = pw.TextAlign.left,
-}) {
+pw.Widget _buildCell(String text, PdfColor color, {bool isRightAlign = false}) {
   return pw.Container(
     padding: const pw.EdgeInsets.all(6),
-    child: pw.Text(
-      text,
-      style: pw.TextStyle(fontSize: 9, color: color),
-      textAlign: align,
-    ),
+    alignment: isRightAlign
+        ? pw.Alignment.centerRight
+        : pw.Alignment.centerLeft,
+    child: pw.Text(text, style: pw.TextStyle(fontSize: 9, color: color)),
   );
 }
 
@@ -525,11 +549,11 @@ pw.Widget _buildFooter(pw.Context context) {
       children: [
         pw.Text(
           'Challan Report',
-          style: pw.TextStyle(fontSize: 10, color: PdfColors.black),
+          style: const pw.TextStyle(fontSize: 10, color: PdfColors.black),
         ),
         pw.Text(
           'Page ${context.pageNumber}',
-          style: pw.TextStyle(fontSize: 10, color: PdfColors.black),
+          style: const pw.TextStyle(fontSize: 10, color: PdfColors.black),
         ),
       ],
     ),
