@@ -1,13 +1,13 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/features/invoice_entry/controllers/invoice_entry_controller.dart';
+import 'package:gamdiwala/features/invoice_entry/screens/invoice_form_screen.dart';
 import 'package:gamdiwala/features/invoice_entry/widgets/invoice_challan_card.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
 import 'package:gamdiwala/styles/text_styles.dart';
 import 'package:gamdiwala/utils/screen_utils/app_paddings.dart';
 import 'package:gamdiwala/utils/screen_utils/app_spacings.dart';
+import 'package:gamdiwala/widgets/app_button.dart';
 import 'package:gamdiwala/widgets/app_date_picker_text_form_field.dart';
 import 'package:gamdiwala/widgets/app_dropdown.dart';
 import 'package:gamdiwala/widgets/app_loading_overlay.dart';
@@ -43,11 +43,67 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
                 color: kColorPrimary,
               ),
             ),
+            actions: [
+              Obx(() {
+                if (_controller.isSelectionMode.value) {
+                  return Row(
+                    children: [
+                      TextButton(
+                        onPressed: _controller.selectAllChallans,
+                        child: Text(
+                          'Select All',
+                          style: TextStyles.kMediumMontserrat(
+                            fontSize: FontSizes.k14FontSize,
+                            color: kColorPrimary,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _controller.clearSelection,
+                        child: Text(
+                          'Clear',
+                          style: TextStyles.kMediumMontserrat(
+                            fontSize: FontSizes.k14FontSize,
+                            color: kColorRed,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
+            ],
           ),
           body: Column(
             children: [
               _buildFilterSection(),
               Expanded(child: _buildChallansList()),
+              Obx(() {
+                if (_controller.selectedChallans.isNotEmpty) {
+                  return Container(
+                    padding: AppPaddings.p16,
+                    decoration: BoxDecoration(
+                      color: kColorWhite,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, -2),
+                        ),
+                      ],
+                    ),
+                    child: AppButton(
+                      title:
+                          'Next (${_controller.selectedChallans.length} selected)',
+                      onPressed: () {
+                        Get.to(() => const InvoiceFormScreen());
+                      },
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
             ],
           ),
         ),
@@ -190,9 +246,23 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
           itemBuilder: (context, index) {
             final challan = challans[index];
 
-            return InvoiceChallanCard(
-              key: ValueKey(challan.invNo + challan.itemSrno.toString()),
-              challan: challan,
+            return Obx(
+              () => InvoiceChallanCard(
+                key: ValueKey('${challan.invNo}_${challan.itemSrno}'),
+                challan: challan,
+                isSelected: _controller.isChallanSelected(challan),
+                isSelectionMode: _controller.isSelectionMode.value,
+                onTap: () {
+                  if (_controller.isSelectionMode.value) {
+                    _controller.toggleChallanSelection(challan);
+                  }
+                },
+                onLongPress: () {
+                  if (!_controller.isSelectionMode.value) {
+                    _controller.startSelection(challan);
+                  }
+                },
+              ),
             );
           },
         ),

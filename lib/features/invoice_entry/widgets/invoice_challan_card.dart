@@ -10,16 +10,80 @@ import 'package:gamdiwala/widgets/app_card.dart';
 
 class InvoiceChallanCard extends StatelessWidget {
   final InvoiceChallanDm challan;
+  final bool isSelected;
+  final bool isSelectionMode;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
-  const InvoiceChallanCard({super.key, required this.challan});
+  const InvoiceChallanCard({
+    super.key,
+    required this.challan,
+    required this.isSelected,
+    required this.isSelectionMode,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      onTap: () {},
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [_buildHeader(), AppSpaces.v6, _buildItemDetails()],
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        transform: Matrix4.identity()..scale(isSelected ? 0.98 : 1.0),
+        child: AppCard(
+          borderColor: isSelected ? kColorPrimary : Colors.transparent,
+          onTap: onTap,
+          child: Stack(
+            children: [
+              if (isSelectionMode)
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: AnimatedScale(
+                    scale: isSelected ? 1.0 : 0.8,
+                    duration: const Duration(milliseconds: 200),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected
+                            ? kColorPrimary
+                            : Colors.grey.shade300,
+                        border: Border.all(
+                          color: isSelected
+                              ? kColorPrimary
+                              : Colors.grey.shade400,
+                          width: 2,
+                        ),
+                      ),
+                      child: isSelected
+                          ? const Icon(
+                              Icons.check,
+                              size: 16,
+                              color: Colors.white,
+                            )
+                          : null,
+                    ),
+                  ),
+                ),
+
+              Padding(
+                padding: isSelectionMode
+                    ? const EdgeInsets.only(left: 40)
+                    : EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [_buildHeader(), AppSpaces.v6, _buildItemDetails()],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
