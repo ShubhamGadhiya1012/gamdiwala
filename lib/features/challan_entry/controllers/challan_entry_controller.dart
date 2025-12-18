@@ -117,9 +117,9 @@ class ChallanController extends GetxController {
       if (fetchedOrders.isNotEmpty) {
         if (status == 'PENDING') {
           pendingOrders.addAll(fetchedOrders);
-          for (var ord in pendingOrders) {
-            print(ord.invNo);
-          }
+          // for (var ord in pendingOrders) {
+          //   // print(ord.invNo);
+          // }
         } else {
           completedOrders.addAll(fetchedOrders);
         }

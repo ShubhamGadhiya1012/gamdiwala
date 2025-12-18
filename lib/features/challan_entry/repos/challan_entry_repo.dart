@@ -12,7 +12,7 @@ class ChallanRepo {
   }) async {
     String? token = await SecureStorageHelper.read('token');
 
-    print(pCode);
+   // print(pCode);
 
     final response = await ApiService.getRequest(
       endpoint: '/Challan/getOrders',
@@ -61,8 +61,8 @@ class ChallanRepo {
         token: token,
         requestBody: {'ChallanNo': challanNo},
       );
-      print(challanNo);
-      print(response);
+    //  print(challanNo);
+    //  print(response);
       return response;
     } catch (e) {
       rethrow;
@@ -108,7 +108,7 @@ class ChallanRepo {
         queryParams: {'Invno': challanNo},
       );
 
-      print(response);
+    //  print(response);
       return response;
     } catch (e) {
       rethrow;
