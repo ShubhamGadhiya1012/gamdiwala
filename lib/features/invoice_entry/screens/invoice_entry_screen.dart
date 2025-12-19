@@ -248,19 +248,15 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
 
             return Obx(
               () => InvoiceChallanCard(
-                key: ValueKey('${challan.invNo}_${challan.itemSrno}'),
+                key: ValueKey('${challan.invNo}_${challan.challanItemSrno}'),
                 challan: challan,
                 isSelected: _controller.isChallanSelected(challan),
                 isSelectionMode: _controller.isSelectionMode.value,
                 onTap: () {
-                  if (_controller.isSelectionMode.value) {
-                    _controller.toggleChallanSelection(challan);
-                  }
+                  _controller.toggleChallanSelection(challan);
                 },
                 onLongPress: () {
-                  if (!_controller.isSelectionMode.value) {
-                    _controller.startSelection(challan);
-                  }
+                  _controller.startSelection(challan);
                 },
               ),
             );

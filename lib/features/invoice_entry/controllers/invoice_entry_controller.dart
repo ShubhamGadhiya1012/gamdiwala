@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:gamdiwala/features/authentication/auth/models/party_dm.dart';
+import 'package:gamdiwala/features/home/models/vehicle_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/bill_type_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/book_dm.dart';
-import 'package:gamdiwala/features/invoice_entry/models/customer_dm.dart';
+import 'package:gamdiwala/features/invoice_entry/models/customer_account_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/customer_voucher_dm.dart';
-import 'package:gamdiwala/features/invoice_entry/models/invoice_dm.dart';
+import 'package:gamdiwala/features/invoice_entry/models/challan_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/invoice_party_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/invoice_type_dm.dart';
+import 'package:gamdiwala/features/invoice_entry/models/item_tax_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/tax_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/repos/invoice_entry_repo.dart';
-import 'package:gamdiwala/features/user_settings/models/salesman_dm.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
+import 'package:gamdiwala/utils/helpers/date_format_helper.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -31,9 +34,9 @@ class InvoiceEntryController extends GetxController {
   var selectedBillPeriod = ''.obs;
   var parties = <InvoicePartyDm>[].obs;
   var selectedParty = Rxn<InvoicePartyDm>();
-  var challans = <InvoiceChallanDm>[].obs;
+  var challans = <ChallanDm>[].obs;
 
-  var selectedChallans = <InvoiceChallanDm>[].obs;
+  var selectedChallans = <ChallanDm>[].obs;
   var isSelectionMode = false.obs;
 
   final page1FormKey = GlobalKey<FormState>();
@@ -49,12 +52,12 @@ class InvoiceEntryController extends GetxController {
   var selectedBookCode = ''.obs;
   var selectedBookDescription = ''.obs;
 
-  var customers = <CustomerDm>[].obs;
+  var customers = <PartyDm>[].obs;
   var customerNames = <String>[].obs;
   var selectedCustomerName = ''.obs;
   var selectedCustomerCode = ''.obs;
 
-  var salesAccounts = <CustomerDm>[].obs;
+  var salesAccounts = <CustomerAccountDm>[].obs;
   var salesAccountNames = <String>[].obs;
   var selectedSalesAccountName = ''.obs;
   var selectedSalesAccountCode = ''.obs;
@@ -77,15 +80,10 @@ class InvoiceEntryController extends GetxController {
   var selectedInvoiceTypeName = ''.obs;
   var selectedInvoiceTypeCode = ''.obs;
 
-  var termsController = TextEditingController();
-  var daysController = TextEditingController();
-  var tDueDateController = TextEditingController();
-  var pdc = false.obs;
-
-  var salesmen = <SalesmanDm>[].obs;
-  var salesmanNames = <String>[].obs;
-  var selectedSalesmanCode = ''.obs;
-  var selectedSalesmanName = ''.obs;
+  var vehicles = <VehicleDm>[].obs;
+  var vehicleDisplayNames = <String>[].obs;
+  var selectedVehicleDisplayName = ''.obs;
+  var selectedVehicleCode = ''.obs;
 
   var remarkController = TextEditingController();
 
@@ -105,12 +103,19 @@ class InvoiceEntryController extends GetxController {
   var netTotalToSend = 0.0.obs;
 
   @override
-  void onInit() {
+  Future<void> onInit() async {
     super.onInit();
     fromDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
     toDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
     dateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-    daysController.addListener(_updateDueDate);
+
+    await getBooks(dbc: 'SALE');
+    await getCustomers();
+    await getSalesAccounts();
+    await getTaxTypes();
+    getBillTypes();
+    getInvoiceTypes();
+    await getVehicles();
   }
 
   void _autoFetchParties() {
@@ -218,28 +223,37 @@ class InvoiceEntryController extends GetxController {
     }
   }
 
-  void startSelection(InvoiceChallanDm challan) {
-    if (isSelectionMode.value) return;
-
+  void startSelection(ChallanDm challan) {
     isSelectionMode.value = true;
-    selectedChallans.add(challan);
-    selectedChallans.refresh();
+    if (!isChallanSelected(challan)) {
+      selectedChallans.add(challan);
+      selectedChallans.refresh();
+    }
   }
 
-  void toggleChallanSelection(InvoiceChallanDm challan) {
+  void toggleChallanSelection(ChallanDm challan) {
     print('toggleChallanSelection called for ${challan.invNo}');
     print('isSelectionMode: ${isSelectionMode.value}');
 
-    // If we're already in selection mode
-    if (isSelectionMode.value) {
+    if (!isSelectionMode.value) {
+      print('NOT in selection mode - entering selection mode');
+      isSelectionMode.value = true;
+      selectedChallans.add(challan);
+      selectedChallans.refresh();
+    } else {
       print('In selection mode - toggling selection');
-      // In selection mode, tap toggles selection
+
       if (isChallanSelected(challan)) {
         print('Deselecting card');
         selectedChallans.removeWhere(
-          (c) => c.invNo == challan.invNo && c.itemSrno == challan.itemSrno,
+          (c) =>
+              c.invNo == challan.invNo &&
+              c.challanItemSrno == challan.challanItemSrno &&
+              c.iCode == challan.iCode,
         );
-        // If no items selected, exit selection mode
+
+        selectedChallans.refresh();
+
         if (selectedChallans.isEmpty) {
           isSelectionMode.value = false;
           print('No items selected, exiting selection mode');
@@ -247,25 +261,21 @@ class InvoiceEntryController extends GetxController {
       } else {
         print('Selecting card');
         selectedChallans.add(challan);
-      }
-      selectedChallans.refresh();
-    } else {
-      print('NOT in selection mode - entering selection mode');
-      // If NOT in selection mode and user taps, enter selection mode and select this card
-      isSelectionMode.value = true;
-      if (!isChallanSelected(challan)) {
-        selectedChallans.add(challan);
         selectedChallans.refresh();
       }
     }
+
     print(
       'After toggle - Selection mode: ${isSelectionMode.value}, Selected count: ${selectedChallans.length}',
     );
   }
 
-  bool isChallanSelected(InvoiceChallanDm challan) {
+  bool isChallanSelected(ChallanDm challan) {
     return selectedChallans.any(
-      (c) => c.invNo == challan.invNo && c.itemSrno == challan.itemSrno,
+      (c) =>
+          c.invNo == challan.invNo &&
+          c.challanItemSrno == challan.challanItemSrno &&
+          c.iCode == challan.iCode,
     );
   }
 
@@ -277,22 +287,6 @@ class InvoiceEntryController extends GetxController {
   void selectAllChallans() {
     selectedChallans.assignAll(challans);
     isSelectionMode.value = true;
-  }
-
-  void _updateDueDate() {
-    final text = daysController.text.trim();
-    if (text.isEmpty) {
-      tDueDateController.text = '';
-      return;
-    }
-
-    final intDays = int.tryParse(text);
-    if (intDays == null) return;
-
-    final today = DateFormat('dd-MM-yyyy').parse(dateController.text);
-    final dueDate = today.add(Duration(days: intDays));
-
-    tDueDateController.text = DateFormat('dd-MM-yyyy').format(dueDate);
   }
 
   Future<void> getBooks({required String dbc}) async {
@@ -321,9 +315,7 @@ class InvoiceEntryController extends GetxController {
   Future<void> getCustomers() async {
     isLoading.value = true;
     try {
-      final fetchedCustomers = await InvoiceEntryRepo.getCustomers(
-        type: '2,4,5',
-      );
+      final fetchedCustomers = await InvoiceEntryRepo.getCustomers();
       customers.assignAll(fetchedCustomers);
       customerNames.assignAll(
         fetchedCustomers.map((customer) => customer.pName),
@@ -341,19 +333,15 @@ class InvoiceEntryController extends GetxController {
       (customer) => customer.pName == customerName,
     );
     selectedCustomerCode.value = selectedCustomerObj.pCode;
-    termsController.text = selectedCustomerObj.terms ?? '';
-    daysController.text = selectedCustomerObj.crDays?.toString() ?? '';
   }
 
   Future<void> getSalesAccounts() async {
     isLoading.value = true;
     try {
-      final fetchedSalesAccounts = await InvoiceEntryRepo.getCustomers(
-        type: '6',
-      );
+      final fetchedSalesAccounts = await InvoiceEntryRepo.getCustomerAccounts();
       salesAccounts.assignAll(fetchedSalesAccounts);
       salesAccountNames.assignAll(
-        fetchedSalesAccounts.map((customer) => customer.pName),
+        fetchedSalesAccounts.map((account) => account.pName),
       );
     } catch (e) {
       showErrorSnackbar('Error', e.toString());
@@ -365,9 +353,33 @@ class InvoiceEntryController extends GetxController {
   void onSalesAccountSelected(String? salesAccountName) {
     selectedSalesAccountName.value = salesAccountName!;
     var selectedSalesAccountObj = salesAccounts.firstWhere(
-      (customer) => customer.pName == salesAccountName,
+      (account) => account.pName == salesAccountName,
     );
     selectedSalesAccountCode.value = selectedSalesAccountObj.pCode;
+  }
+
+  Future<void> getVehicles() async {
+    isLoading.value = true;
+    try {
+      final fetchedVehicles = await InvoiceEntryRepo.getVehicles();
+      vehicles.assignAll(fetchedVehicles);
+      vehicleDisplayNames.assignAll(
+        fetchedVehicles.map((v) => '${v.regNo} - ${v.vType}'),
+      );
+    } catch (e) {
+      showErrorSnackbar('Error', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void onVehicleSelected(String? vehicleDisplay) {
+    if (vehicleDisplay == null) return;
+    selectedVehicleDisplayName.value = vehicleDisplay;
+    var selectedVehicleObj = vehicles.firstWhere(
+      (v) => '${v.regNo} - ${v.vType}' == vehicleDisplay,
+    );
+    selectedVehicleCode.value = selectedVehicleObj.vCode;
   }
 
   Future<void> getTaxTypes() async {
@@ -470,63 +482,51 @@ class InvoiceEntryController extends GetxController {
     selectedInvoiceTypeCode.value = selectedInvoiceTypeObj.invoiceTypeCode;
   }
 
-  Future<void> getSalesmen() async {
+  Future<void> prepareItemsFromChallans() async {
+    itemsToSend.clear();
     isLoading.value = true;
+
     try {
-      final fetchedSalesmen = await InvoiceEntryRepo.getSalesmen();
-      salesmen.assignAll(fetchedSalesmen);
-      salesmanNames.assignAll(fetchedSalesmen.map((se) => se.seName));
+      for (var challan in selectedChallans) {
+        ItemTaxDm? taxData = await InvoiceEntryRepo.getItemTax(
+          iCode: challan.iCode,
+          tCode: selectedTaxTypeCode.value,
+        );
+
+        Map<String, dynamic> itemData = {
+          "SrNo": (itemsToSend.length + 1).toString(),
+          "ICode": challan.iCode,
+          "ItemPack": challan.itemPack,
+          "CaratNos": challan.caratNos,
+          "Qty": challan.qty.toStringAsFixed(3),
+          "Rate": challan.rate.toStringAsFixed(2),
+          "Amount": challan.amount.toStringAsFixed(2),
+          "CaratQty": challan.caratQty,
+          "LRValue": challan.lrValue.toStringAsFixed(2),
+          "Fat": challan.fat.toStringAsFixed(3),
+          "OrderSrNo": challan.orderSrNo.toString(),
+          "OrderNo": challan.orderNo,
+          "ChallanItemSrNo": challan.challanItemSrno.toString(),
+          "ChallanNo": challan.invNo,
+          "IGSTPerc": taxData?.igst ?? 0.0,
+          "CGSTPerc": taxData?.cgst ?? 0.0,
+          "SGSTPerc": taxData?.sgst ?? 0.0,
+          "INAME": challan.iName.trim(),
+        };
+        itemsToSend.add(itemData);
+      }
+
+      updateGrossTotal();
+      itemsToSend.refresh();
     } catch (e) {
-      showErrorSnackbar('Error', e.toString());
+      print(e.toString());
+      showErrorSnackbar(
+        'Error',
+        'Failed to fetch item tax details: ${e.toString()}',
+      );
     } finally {
       isLoading.value = false;
     }
-  }
-
-  void onSalesmanSelected(String? salesmanName) {
-    selectedSalesmanName.value = salesmanName!;
-    final selectedSalesmanObj = salesmen.firstWhere(
-      (se) => se.seName == salesmanName,
-    );
-    selectedSalesmanCode.value = selectedSalesmanObj.seCode;
-  }
-
-  void prepareItemsFromChallans() {
-    itemsToSend.clear();
-
-    for (var challan in selectedChallans) {
-      Map<String, dynamic> itemData = {
-        "SrNo": (itemsToSend.length + 1).toString(),
-        "OrderNo": challan.orderNo,
-        "OrderYearID": "0",
-        "OrdItemSrNo": challan.orderSrNo.toString(),
-        "ICODE": challan.iCode,
-        "INAME": challan.iName.trim(),
-        "Qty": challan.qty.toString(),
-        "Rate": challan.rate.toStringAsFixed(2),
-        "DIS_P": "0.00",
-        "DIS_A": "0.00",
-        "Amount": challan.amount.toStringAsFixed(2),
-        "GDCode": "",
-        "GDName": "",
-        "BatchNo": "",
-        "IGSTPerc": 0.0,
-        "CGSTPerc": 0.0,
-        "SGSTPerc": 0.0,
-        "HSNNo": "",
-        "MFGBatchNo": "",
-        "MfgDate1": "",
-        "ExpDate1": "",
-        "ItemPack": challan.itemPack,
-        "CaratNos": challan.caratNos,
-        "CaratQty": challan.caratQty,
-        "VehicleCode": challan.vehicleCode,
-      };
-      itemsToSend.add(itemData);
-    }
-
-    updateGrossTotal();
-    itemsToSend.refresh();
   }
 
   void deleteItem(int index) {
@@ -774,9 +774,9 @@ class InvoiceEntryController extends GetxController {
       amountWithCharges += (freightNT == 'C') ? freightShare : -freightShare;
       amountWithCharges += (otherNT == 'C') ? otherShare : -otherShare;
 
-      double igst = item["IGSTPerc"] ?? 0.00;
-      double cgst = item["CGSTPerc"] ?? 0.00;
-      double sgst = item["SGSTPerc"] ?? 0.00;
+      double igst = double.tryParse(item["IGSTPerc"]?.toString() ?? '0') ?? 0.0;
+      double cgst = double.tryParse(item["CGSTPerc"]?.toString() ?? '0') ?? 0.0;
+      double sgst = double.tryParse(item["SGSTPerc"]?.toString() ?? '0') ?? 0.0;
 
       if (isIGSTApplicable.value) {
         totalIgst.value += ((amountWithCharges * igst) / 100);
@@ -881,25 +881,23 @@ class InvoiceEntryController extends GetxController {
   List<Map<String, dynamic>> getItemsForAPI() {
     return itemsToSend.map((item) {
       return {
-        "OrderNo": item['OrderNo'],
-        "OrderYearID": item['OrderYearID'],
-        "OrdItemSrNo": item['OrdItemSrNo'],
-        "ICODE": item['ICODE'],
         "SrNo": item['SrNo'],
+        "ICode": item['ICode'],
+        "ItemPack": item['ItemPack'].toString(),
+        "CaratNos": item['CaratNos'].toString(),
         "Qty": item['Qty'],
         "Rate": item['Rate'],
-        "DIS_P": item['DIS_P'],
-        "DIS_A": item['DIS_A'],
         "Amount": item['Amount'],
-        "GDCode": item['GDCode'],
-        "BatchNo": item['BatchNo'],
-        "HSNNo": item['HSNNo'],
-        "IGSTPerc": item['IGSTPerc'].toString(),
-        "SGSTPerc": item['SGSTPerc'].toString(),
-        "CGSTPerc": item['CGSTPerc'].toString(),
-        "MFGBatchNo": item['MFGBatchNo'],
-        "MfgDate1": item['MfgDate1'],
-        "ExpDate1": item['ExpDate1'],
+        "CaratQty": item['CaratQty'].toString(),
+        "LRValue": item['LRValue'],
+        "Fat": item['Fat'],
+        "OrderSrNo": item['OrderSrNo'],
+        "OrderNo": item['OrderNo'],
+        "ChallanItemSrNo": item['ChallanItemSrNo'],
+        "ChallanNo": item['ChallanNo'],
+        "IGSTPerc": (item['IGSTPerc'] ?? 0.0).toString(),
+        "SGSTPerc": (item['SGSTPerc'] ?? 0.0).toString(),
+        "CGSTPerc": (item['CGSTPerc'] ?? 0.0).toString(),
       };
     }).toList();
   }
@@ -927,38 +925,32 @@ class InvoiceEntryController extends GetxController {
     }).toList();
   }
 
-  Future<void> saveInvoiceEntry({required String invNo}) async {
+  Future<void> saveSalesEntry() async {
     isLoading.value = true;
 
     try {
-      var response = await InvoiceEntryRepo.saveInvoiceEntry(
-        invNo: invNo,
+      var response = await InvoiceEntryRepo.saveSalesEntry(
+        salesInvo: "",
         bookCode: selectedBookCode.value,
         date: convertToApiDateFormat(dateController.text),
-        amount: netTotalToSend.value.toString(),
+        amount: netTotalToSend.value.toStringAsFixed(2),
         pCode: selectedCustomerCode.value,
-        pdc: pdc.value,
         pCodeC: selectedSalesAccountCode.value,
         gstBillType: selectedBillTypeCode.value,
         remark: remarkController.text.isNotEmpty ? remarkController.text : '',
-        terms: termsController.text.isNotEmpty ? termsController.text : '',
-        days: daysController.text.isNotEmpty ? daysController.text : '0',
-        tDueDate: tDueDateController.text.isNotEmpty
-            ? (convertToApiDateFormat(tDueDateController.text))
-            : '',
         tCode: selectedTaxTypeCode.value,
-        seCode: selectedSalesmanCode.value,
+        vCode: selectedVehicleCode.value,
         typeOfInvoice: selectedInvoiceTypeCode.value,
-        valueOfGoods: valueOfGoodsToSend.value.toString(),
+        valueOfGoods: valueOfGoodsToSend.value.toStringAsFixed(2),
         itemData: getItemsForAPI(),
         ledgerData: getLedgerForAPI(),
       );
 
       if (response != null && response.containsKey('message')) {
         String message = response['message'];
+
+        Get.back();
         showSuccessSnackbar('Success', message);
-        Get.back();
-        Get.back();
       }
     } catch (e) {
       if (e is Map<String, dynamic>) {
@@ -968,15 +960,6 @@ class InvoiceEntryController extends GetxController {
       }
     } finally {
       isLoading.value = false;
-    }
-  }
-
-  String convertToApiDateFormat(String date) {
-    try {
-      final parsedDate = DateFormat('dd-MM-yyyy').parse(date);
-      return DateFormat('yyyy-MM-dd').format(parsedDate);
-    } catch (e) {
-      return date;
     }
   }
 }

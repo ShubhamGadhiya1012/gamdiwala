@@ -1,15 +1,17 @@
+import 'package:gamdiwala/features/authentication/auth/models/party_dm.dart';
+import 'package:gamdiwala/features/home/models/vehicle_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/book_dm.dart';
-import 'package:gamdiwala/features/invoice_entry/models/customer_dm.dart';
+import 'package:gamdiwala/features/invoice_entry/models/customer_account_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/customer_voucher_dm.dart';
-import 'package:gamdiwala/features/invoice_entry/models/invoice_dm.dart';
+import 'package:gamdiwala/features/invoice_entry/models/challan_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/invoice_party_dm.dart';
+import 'package:gamdiwala/features/invoice_entry/models/item_tax_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/tax_dm.dart';
 import 'package:gamdiwala/features/user_settings/models/salesman_dm.dart';
 import 'package:gamdiwala/services/api_service.dart';
 import 'package:gamdiwala/utils/helpers/secure_storage_helper.dart';
 
 class InvoiceEntryRepo {
-  // Get Parties for filter
   static Future<List<InvoicePartyDm>> getParties({
     required String fromDate,
     required String toDate,
@@ -40,8 +42,7 @@ class InvoiceEntryRepo {
     }
   }
 
-  // Get Challans
-  static Future<List<InvoiceChallanDm>> getChallans({
+  static Future<List<ChallanDm>> getChallans({
     required String fromDate,
     required String toDate,
     required String pCode,
@@ -60,24 +61,23 @@ class InvoiceEntryRepo {
       }
 
       return (response['data'] as List<dynamic>)
-          .map((item) => InvoiceChallanDm.fromJson(item))
+          .map((item) => ChallanDm.fromJson(item))
           .toList();
     } catch (e) {
       rethrow;
     }
   }
 
-  // Get Books
   static Future<List<BookDm>> getBooks({required String dbc}) async {
     String? token = await SecureStorageHelper.read('token');
 
     try {
       final response = await ApiService.getRequest(
-        endpoint: '/Master/books',
+        endpoint: '/Master/book',
         token: token,
         queryParams: {'DBC': dbc},
       );
-
+      print(response);
       if (response == null || response['data'] == null) {
         return [];
       }
@@ -90,15 +90,13 @@ class InvoiceEntryRepo {
     }
   }
 
-  // Get Customers
-  static Future<List<CustomerDm>> getCustomers({required String type}) async {
+  static Future<List<PartyDm>> getCustomers() async {
     String? token = await SecureStorageHelper.read('token');
 
     try {
       final response = await ApiService.getRequest(
-        endpoint: '/Master/customers',
+        endpoint: '/Master/customer',
         token: token,
-        queryParams: {'Type': type},
       );
 
       if (response == null || response['data'] == null) {
@@ -106,14 +104,34 @@ class InvoiceEntryRepo {
       }
 
       return (response['data'] as List<dynamic>)
-          .map((item) => CustomerDm.fromJson(item))
+          .map((item) => PartyDm.fromJson(item))
           .toList();
     } catch (e) {
       rethrow;
     }
   }
 
-  // Get Tax Types
+  static Future<List<CustomerAccountDm>> getCustomerAccounts() async {
+    String? token = await SecureStorageHelper.read('token');
+
+    try {
+      final response = await ApiService.getRequest(
+        endpoint: '/Master/customerAccount',
+        token: token,
+      );
+
+      if (response == null || response['data'] == null) {
+        return [];
+      }
+
+      return (response['data'] as List<dynamic>)
+          .map((item) => CustomerAccountDm.fromJson(item))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   static Future<List<TaxDm>> getTaxTypes() async {
     String? token = await SecureStorageHelper.read('token');
 
@@ -135,7 +153,6 @@ class InvoiceEntryRepo {
     }
   }
 
-  // Get Salesmen
   static Future<List<SalesmanDm>> getSalesmen() async {
     String? token = await SecureStorageHelper.read('token');
 
@@ -157,15 +174,14 @@ class InvoiceEntryRepo {
     }
   }
 
-  // Get Customise Voucher
   static Future<List<CustomiseVoucherDm>> getCustomiseVoucher() async {
     String? token = await SecureStorageHelper.read('token');
 
     try {
       final response = await ApiService.getRequest(
-        endpoint: '/Master/CustomiseVoucher',
+        endpoint: '/Master/customizeVoucher',
         token: token,
-        queryParams: {'BookCode': '1000'},
+        queryParams: {'BOOKCODE': '1000', 'DBC': 'SALE'},
       );
 
       if (response == null || response['data'] == null) {
@@ -180,22 +196,61 @@ class InvoiceEntryRepo {
     }
   }
 
-  // Save Invoice Entry
-  static Future<dynamic> saveInvoiceEntry({
-    required String invNo,
+  static Future<List<VehicleDm>> getVehicles() async {
+    String? token = await SecureStorageHelper.read('token');
+
+    try {
+      final response = await ApiService.getRequest(
+        endpoint: '/Master/vehicle',
+        token: token,
+      );
+
+      if (response == null || response['data'] == null) return [];
+
+      return (response['data'] as List)
+          .map((item) => VehicleDm.fromJson(item))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  static Future<ItemTaxDm?> getItemTax({
+    required String iCode,
+    required String tCode,
+  }) async {
+    String? token = await SecureStorageHelper.read('token');
+
+    try {
+      final response = await ApiService.getRequest(
+        endpoint: '/Master/itemtax',
+        token: token,
+        queryParams: {'ICODE': iCode, 'TCODE': tCode},
+      );
+
+      if (response == null ||
+          response['data'] == null ||
+          response['data'].isEmpty) {
+        return null;
+      }
+
+      return ItemTaxDm.fromJson(response['data'][0]);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  static Future<dynamic> saveSalesEntry({
     required String bookCode,
+    required String salesInvo,
     required String date,
     required String amount,
     required String pCode,
-    required bool pdc,
     required String pCodeC,
     required String gstBillType,
     required String remark,
-    required String terms,
-    required String days,
-    required String tDueDate,
     required String tCode,
-    required String seCode,
+    required String vCode,
     required String typeOfInvoice,
     required String valueOfGoods,
     required List<Map<String, dynamic>> itemData,
@@ -204,33 +259,33 @@ class InvoiceEntryRepo {
     String? token = await SecureStorageHelper.read('token');
 
     final Map<String, dynamic> requestBody = {
-      "InvNo": invNo,
+      "SalesInvno": salesInvo,
       "BookCode": bookCode,
       "Date": date,
       "Amount": amount,
       "PCode": pCode,
-      "PDC": pdc,
       "PCodeC": pCodeC,
       "GSTBillType": gstBillType,
       "Remark": remark,
-      "Terms": terms,
-      "Days": days,
-      "TDueDate": tDueDate,
-      "SECode": seCode,
       "TCode": tCode,
       "TypeofInvoice": typeOfInvoice,
       "ValueOfGoods": valueOfGoods,
+      "VehicleCode": vCode,
       "ItemData": itemData,
       "LedgerData": ledgerData,
     };
-    print(requestBody);
+
+    requestBody.forEach((key, value) {
+      print('$key: $value');
+    });
+
     try {
       var response = await ApiService.postRequest(
-        endpoint: '/Invoice/saveInvoice',
+        endpoint: '/Invoice/salesEntry',
         requestBody: requestBody,
         token: token,
       );
-
+      print(response);
       return response;
     } catch (e) {
       rethrow;

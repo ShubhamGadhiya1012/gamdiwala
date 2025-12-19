@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/features/invoice_entry/controllers/invoice_entry_controller.dart';
@@ -16,7 +14,6 @@ import 'package:gamdiwala/widgets/app_date_picker_text_form_field.dart';
 import 'package:gamdiwala/widgets/app_dropdown.dart';
 import 'package:gamdiwala/widgets/app_loading_overlay.dart';
 import 'package:gamdiwala/widgets/app_page_indicator%20copy.dart';
-import 'package:gamdiwala/widgets/app_text_button.dart';
 import 'package:gamdiwala/widgets/app_text_form_field.dart';
 import 'package:get/get.dart';
 
@@ -29,22 +26,6 @@ class InvoiceFormScreen extends StatefulWidget {
 
 class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   final InvoiceEntryController _controller = Get.find<InvoiceEntryController>();
-
-  @override
-  void initState() {
-    super.initState();
-    _initialize();
-  }
-
-  void _initialize() async {
-    // await _controller.getBooks(dbc: 'SALE');
-    // await _controller.getCustomers();
-    // await _controller.getSalesAccounts();
-    // await _controller.getTaxTypes();
-    // _controller.getBillTypes();
-    // _controller.getInvoiceTypes();
-    // await _controller.getSalesmen();
-  }
 
   void _handleBackNavigation() {
     if (_controller.currentPage.value == 0) {
@@ -228,13 +209,13 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
             Obx(
               () => AppDropdown(
                 items: _controller.salesAccountNames,
-                hintText: 'Sales Account *',
+                hintText: 'Customer Account *',
                 onChanged: _controller.onSalesAccountSelected,
                 selectedItem:
                     _controller.selectedSalesAccountName.value.isNotEmpty
                     ? _controller.selectedSalesAccountName.value
                     : null,
-                validatorText: 'Please select a sales account.',
+                validatorText: 'Please select a customer account.',
               ),
             ),
             AppSpaces.v10,
@@ -275,78 +256,21 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               ),
             ),
             AppSpaces.v10,
-            AppTextFormField(
-              controller: _controller.termsController,
-              hintText: 'Terms',
-              inputFormatters: [UpperCaseTextInputFormatter()],
-            ),
-            AppSpaces.v10,
-            AppTextFormField(
-              controller: _controller.daysController,
-              hintText: 'Days',
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter no of days.';
-                }
-                return null;
-              },
-            ),
-            AppSpaces.v10,
-            AppDatePickerTextFormField(
-              dateController: _controller.tDueDateController,
-              hintText: 'Due Date',
-              enabled: false,
-              fillColor: kColorLightGrey,
-            ),
-            AppSpaces.v10,
-            Obx(
-              () => Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: kColorDarkGrey),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: CheckboxListTile(
-                  title: Text(
-                    'PDC',
-                    style: TextStyles.kMediumMontserrat(
-                      fontSize: FontSizes.k16FontSize,
-                      color: kColorPrimary,
-                    ),
-                  ),
-                  value: _controller.pdc.value,
-                  onChanged: (bool? value) {
-                    _controller.pdc.value = value ?? false;
-                  },
-                  activeColor: kColorPrimary,
-                  checkColor: kColorWhite,
-                  contentPadding: AppPaddings.combined(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  controlAffinity: ListTileControlAffinity.leading,
-                  dense: true,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  tileColor: kColorWhite,
-                  selected: _controller.pdc.value,
-                  checkboxScaleFactor: 1,
-                ),
-              ),
-            ),
-            AppSpaces.v10,
             Obx(
               () => AppDropdown(
-                items: _controller.salesmanNames,
-                hintText: 'Salesman',
-                onChanged: _controller.onSalesmanSelected,
-                selectedItem: _controller.selectedSalesmanName.value.isNotEmpty
-                    ? _controller.selectedSalesmanName.value
+                items: _controller.vehicleDisplayNames,
+                hintText: 'Choose Vehicle *',
+                onChanged: _controller.onVehicleSelected,
+                selectedItem:
+                    _controller.selectedVehicleDisplayName.value.isNotEmpty
+                    ? _controller.selectedVehicleDisplayName.value
                     : null,
+                validatorText: 'Please select a vehicle.',
               ),
             ),
+
             AppSpaces.v10,
+
             AppTextFormField(
               controller: _controller.remarkController,
               hintText: 'Remarks',
@@ -366,7 +290,8 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
         AppSpaces.v10,
         Expanded(
           child: Obx(() {
-            if (_controller.itemsToSend.isEmpty) {
+            if (_controller.itemsToSend.isEmpty &&
+                !_controller.isLoading.value) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -501,7 +426,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
             AppButton(
               title: 'Save',
               onPressed: () {
-                _controller.saveInvoiceEntry(invNo: '');
+                _controller.saveSalesEntry();
               },
             ),
             AppSpaces.v20,
@@ -517,38 +442,76 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: kColorWhite,
-          titlePadding: AppPaddings.custom(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: 6,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          contentPadding: AppPaddings.custom(left: 20, right: 20, bottom: 8),
-          title: Text(
-            'Progress Will Be Lost',
-            style: TextStyles.kSemiBoldMontserrat(
-              fontSize: FontSizes.k20FontSize,
-              color: kColorRed,
-            ),
+          title: Row(
+            children: [
+              Container(
+                padding: AppPaddings.p8,
+                decoration: BoxDecoration(
+                  color: kColorRed.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.warning_rounded, color: kColorRed, size: 24),
+              ),
+              AppSpaces.h12,
+              Text(
+                'Progress Will Be Lost',
+                style: TextStyles.kBoldMontserrat(
+                  fontSize: FontSizes.k18FontSize,
+                  color: kColorTextPrimary,
+                ),
+              ),
+            ],
           ),
           content: Text(
             'Going back will lose all progress. Are you sure?',
-            style: TextStyles.kSemiBoldMontserrat(
-              fontSize: FontSizes.k16FontSize,
+            style: TextStyles.kMediumMontserrat(
+              fontSize: FontSizes.k14FontSize,
+              color: kColorDarkGrey,
             ),
           ),
+          actionsPadding: AppPaddings.combined(horizontal: 16, vertical: 12),
           actions: [
-            AppTextButton(onPressed: () => Get.back(), title: 'Cancel'),
-            AppSpaces.h10,
-            AppTextButton(
-              onPressed: () {
-                Get.back();
-                if (isBack) {
-                  Get.back();
-                }
-              },
-              title: 'Go Back',
-              color: kColorRed,
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Get.back(),
+                    style: TextButton.styleFrom(
+                      padding: AppPaddings.combined(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyles.kSemiBoldMontserrat(
+                        fontSize: FontSizes.k14FontSize,
+                        color: kColorDarkGrey,
+                      ),
+                    ),
+                  ),
+                ),
+                AppSpaces.h8,
+                Expanded(
+                  child: AppButton(
+                    onPressed: () {
+                      Get.back();
+                      if (isBack) {
+                        Get.back();
+                      }
+                    },
+                    buttonColor: kColorRed,
+                    title: 'Go Back',
+                    titleSize: 16,
+                  ),
+                ),
+              ],
             ),
           ],
         );

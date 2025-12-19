@@ -15,8 +15,8 @@ class TaxDm {
 
   factory TaxDm.fromJson(Map<String, dynamic> json) {
     return TaxDm(
-      tCode: json['TCODE'] ?? '',
-      tName: json['TNAME'] ?? '',
+      tCode: json['TCode'] ?? '',
+      tName: json['TName'] ?? '',
       igstYn: json['IGSTYN'] ?? false,
       sgstYn: json['SGSTYN'] ?? false,
       cgstYn: json['CGSTYN'] ?? false,

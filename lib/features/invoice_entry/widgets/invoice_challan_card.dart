@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
-import 'package:gamdiwala/features/invoice_entry/models/invoice_dm.dart';
+import 'package:gamdiwala/features/invoice_entry/models/challan_dm.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
 import 'package:gamdiwala/styles/text_styles.dart';
 import 'package:gamdiwala/utils/helpers/date_format_helper.dart';
@@ -9,7 +9,7 @@ import 'package:gamdiwala/utils/screen_utils/app_spacings.dart';
 import 'package:gamdiwala/widgets/app_card.dart';
 
 class InvoiceChallanCard extends StatelessWidget {
-  final InvoiceChallanDm challan;
+  final ChallanDm challan;
   final bool isSelected;
   final bool isSelectionMode;
   final VoidCallback onTap;
