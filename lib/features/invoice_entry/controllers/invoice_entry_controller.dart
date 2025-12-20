@@ -956,7 +956,6 @@ class InvoiceEntryController extends GetxController {
       if (response != null && response.containsKey('message')) {
         String message = response['message'];
         clearAll();
-        Get.back();
         showSuccessSnackbar('Success', message);
       }
     } catch (e) {
