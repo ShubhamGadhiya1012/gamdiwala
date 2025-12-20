@@ -118,7 +118,7 @@ class InvoiceChallanCard extends StatelessWidget {
 
   Widget _buildItemDetails() {
     return Container(
-      padding: AppPaddings.p12,
+      padding: AppPaddings.p10,
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(8),
@@ -151,9 +151,9 @@ class InvoiceChallanCard extends StatelessWidget {
               ),
             ],
           ),
-          AppSpaces.v12,
+          AppSpaces.v10,
           Divider(height: 1, color: Colors.grey.shade300),
-          AppSpaces.v12,
+          AppSpaces.v10,
           Wrap(
             spacing: 12,
             runSpacing: 8,

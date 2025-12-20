@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/features/invoice_entry/controllers/invoice_entry_controller.dart';
@@ -97,6 +99,19 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
                       title:
                           'Next (${_controller.selectedChallans.length} selected)',
                       onPressed: () {
+                        if (_controller.selectedVehicleForFilter.value !=
+                            null) {
+                          _controller.selectedVehicleDisplayName.value =
+                              '${_controller.selectedVehicleForFilter.value!.regNo} - ${_controller.selectedVehicleForFilter.value!.vType}';
+                          _controller.selectedVehicleCode.value =
+                              _controller.selectedVehicleForFilter.value!.vCode;
+                        }
+                        if (_controller.selectedParty.value != null) {
+                          _controller.selectedCustomerName.value =
+                              _controller.selectedParty.value!.pName;
+                          _controller.selectedCustomerCode.value =
+                              _controller.selectedParty.value!.pCode;
+                        }
                         Get.to(() => const InvoiceFormScreen());
                       },
                     ),
@@ -163,7 +178,7 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
                 ),
               ],
             ),
-            AppSpaces.v12,
+            AppSpaces.v10,
             Obx(
               () => AppDropdown(
                 items: _controller.billPeriodOptions,
@@ -177,7 +192,7 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
                     : null,
               ),
             ),
-            AppSpaces.v12,
+            AppSpaces.v10,
             Obx(
               () => AppDropdown(
                 items: _controller.parties.map((party) => party.pName).toList(),
@@ -187,6 +202,47 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
                   _controller.onPartyChanged(value);
                 },
                 selectedItem: _controller.selectedParty.value?.pName,
+              ),
+            ),
+            AppSpaces.v10,
+            Obx(
+              () => AppDropdown(
+                items: _controller.vehicleDisplayNames,
+                hintText: 'Choose Vehicle',
+                onChanged: (value) {
+                  setState(() {});
+                  _controller.onVehicleForFilterChanged(value);
+                },
+                selectedItem: _controller.selectedVehicleForFilter.value != null
+                    ? '${_controller.selectedVehicleForFilter.value!.regNo} - ${_controller.selectedVehicleForFilter.value!.vType}'
+                    : null,
+              ),
+            ),
+            AppSpaces.v8,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: kColorPrimary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: kColorPrimary.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 18, color: kColorPrimary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Long press on card to select multiple items',
+                      style: TextStyles.kMediumMontserrat(
+                        fontSize: FontSizes.k12FontSize,
+                        color: kColorPrimary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

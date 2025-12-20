@@ -13,7 +13,7 @@ import 'package:gamdiwala/widgets/app_button.dart';
 import 'package:gamdiwala/widgets/app_date_picker_text_form_field.dart';
 import 'package:gamdiwala/widgets/app_dropdown.dart';
 import 'package:gamdiwala/widgets/app_loading_overlay.dart';
-import 'package:gamdiwala/widgets/app_page_indicator%20copy.dart';
+import 'package:gamdiwala/widgets/app_page_indicator.dart';
 import 'package:gamdiwala/widgets/app_text_form_field.dart';
 import 'package:get/get.dart';
 
@@ -123,20 +123,6 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                     size: 20,
                   ),
                 ),
-                actions: [
-                  Obx(
-                    () => _controller.currentPage.value < 2
-                        ? IconButton(
-                            onPressed: () => _handleNextNavigation(),
-                            icon: Icon(
-                              Icons.arrow_forward_ios,
-                              color: kColorPrimary,
-                              size: 20,
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
               ),
               body: Padding(
                 padding: AppPaddings.p12,
@@ -158,6 +144,16 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                         children: [buildPage1(), buildPage2(), buildPage3()],
                       ),
                     ),
+                    Obx(() {
+                      if (_controller.currentPage.value < 2) {
+                        return AppButton(
+                          title: 'Next',
+                          onPressed: () => _handleNextNavigation(),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
+                    AppSpaces.v14,
                   ],
                 ),
               ),
@@ -203,6 +199,8 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                     ? _controller.selectedCustomerName.value
                     : null,
                 validatorText: 'Please select a customer.',
+                fillColor: kColorLightGrey,
+                enabled: false,
               ),
             ),
             AppSpaces.v10,
@@ -266,6 +264,8 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                     ? _controller.selectedVehicleDisplayName.value
                     : null,
                 validatorText: 'Please select a vehicle.',
+                fillColor: kColorLightGrey,
+                enabled: false,
               ),
             ),
 
@@ -503,6 +503,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                     onPressed: () {
                       Get.back();
                       if (isBack) {
+                        _controller.clearAll();
                         Get.back();
                       }
                     },

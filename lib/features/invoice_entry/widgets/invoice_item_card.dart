@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
@@ -46,7 +48,7 @@ class InvoiceItemCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            AppSpaces.h12,
+            AppSpaces.h10,
             Text(
               '₹${item['Amount']}',
               style: TextStyles.kBoldMontserrat(
@@ -54,7 +56,7 @@ class InvoiceItemCard extends StatelessWidget {
                 color: Colors.green.shade700,
               ),
             ),
-            AppSpaces.h12,
+            AppSpaces.h10,
             InkWell(
               onTap: () => _showDeleteConfirmation(context),
               child: Container(
@@ -76,7 +78,7 @@ class InvoiceItemCard extends StatelessWidget {
 
   Widget _buildItemDetails() {
     return Container(
-      padding: AppPaddings.p12,
+      padding: AppPaddings.p10,
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(8),
@@ -135,18 +137,6 @@ class InvoiceItemCard extends StatelessWidget {
               if (item['CaratQty'] != null &&
                   (int.tryParse(item['CaratQty'].toString()) ?? 0) > 0)
                 _buildInfoChip('Carat Qty', item['CaratQty'].toString()),
-
-              if (item['IGSTPerc'] != null &&
-                  (double.tryParse(item['IGSTPerc'].toString()) ?? 0) > 0)
-                _buildInfoChip('IGST', '${item['IGSTPerc']}%'),
-
-              if (item['CGSTPerc'] != null &&
-                  (double.tryParse(item['CGSTPerc'].toString()) ?? 0) > 0)
-                _buildInfoChip('CGST', '${item['CGSTPerc']}%'),
-
-              if (item['SGSTPerc'] != null &&
-                  (double.tryParse(item['SGSTPerc'].toString()) ?? 0) > 0)
-                _buildInfoChip('SGST', '${item['SGSTPerc']}%'),
             ],
           ),
         ],
@@ -203,7 +193,7 @@ class InvoiceItemCard extends StatelessWidget {
                 ),
                 child: Icon(Icons.warning_rounded, color: kColorRed, size: 24),
               ),
-              AppSpaces.h12,
+              AppSpaces.h10,
               Text(
                 'Delete Item',
                 style: TextStyles.kBoldMontserrat(

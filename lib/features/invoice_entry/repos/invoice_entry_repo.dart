@@ -46,6 +46,7 @@ class InvoiceEntryRepo {
     required String fromDate,
     required String toDate,
     required String pCode,
+    required String vehicleCode,
   }) async {
     String? token = await SecureStorageHelper.read('token');
 
@@ -53,7 +54,12 @@ class InvoiceEntryRepo {
       final response = await ApiService.getRequest(
         endpoint: '/Invoice/getChallans',
         token: token,
-        queryParams: {'FromDate': fromDate, 'ToDate': toDate, 'PCode': pCode},
+        queryParams: {
+          'FromDate': fromDate,
+          'ToDate': toDate,
+          'PCode': pCode,
+          'VehicleCode': vehicleCode,
+        },
       );
 
       if (response == null || response['data'] == null) {
@@ -77,7 +83,7 @@ class InvoiceEntryRepo {
         token: token,
         queryParams: {'DBC': dbc},
       );
-      print(response);
+
       if (response == null || response['data'] == null) {
         return [];
       }

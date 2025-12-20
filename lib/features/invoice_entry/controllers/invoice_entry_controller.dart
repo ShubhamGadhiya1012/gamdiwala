@@ -35,6 +35,7 @@ class InvoiceEntryController extends GetxController {
   var parties = <InvoicePartyDm>[].obs;
   var selectedParty = Rxn<InvoicePartyDm>();
   var challans = <ChallanDm>[].obs;
+  var selectedVehicleForFilter = Rxn<VehicleDm>();
 
   var selectedChallans = <ChallanDm>[].obs;
   var isSelectionMode = false.obs;
@@ -132,6 +133,7 @@ class InvoiceEntryController extends GetxController {
     challans.clear();
     selectedChallans.clear();
     isSelectionMode.value = false;
+    selectedVehicleForFilter.value = null;
     _autoFetchParties();
   }
 
@@ -143,7 +145,17 @@ class InvoiceEntryController extends GetxController {
       challans.clear();
       selectedChallans.clear();
       isSelectionMode.value = false;
+      selectedVehicleForFilter.value = null;
       _autoFetchParties();
+    }
+  }
+
+  void onVehicleForFilterChanged(String? vehicleDisplay) {
+    if (vehicleDisplay != null) {
+      selectedVehicleForFilter.value = vehicles.firstWhere(
+        (v) => '${v.regNo} - ${v.vType}' == vehicleDisplay,
+      );
+      getChallans();
     }
   }
 
@@ -186,7 +198,10 @@ class InvoiceEntryController extends GetxController {
   void onPartyChanged(String? pName) {
     if (pName != null) {
       selectedParty.value = parties.firstWhere((party) => party.pName == pName);
-      getChallans();
+      selectedVehicleForFilter.value = null;
+      challans.clear();
+      selectedChallans.clear();
+      isSelectionMode.value = false;
     }
   }
 
@@ -206,6 +221,7 @@ class InvoiceEntryController extends GetxController {
         fromDate: fromDate,
         toDate: toDate,
         pCode: selectedParty.value!.pCode,
+        vehicleCode: selectedVehicleForFilter.value?.vCode ?? '',
       );
 
       challans.assignAll(fetchedChallans);
@@ -232,19 +248,12 @@ class InvoiceEntryController extends GetxController {
   }
 
   void toggleChallanSelection(ChallanDm challan) {
-    print('toggleChallanSelection called for ${challan.invNo}');
-    print('isSelectionMode: ${isSelectionMode.value}');
-
     if (!isSelectionMode.value) {
-      print('NOT in selection mode - entering selection mode');
       isSelectionMode.value = true;
       selectedChallans.add(challan);
       selectedChallans.refresh();
     } else {
-      print('In selection mode - toggling selection');
-
       if (isChallanSelected(challan)) {
-        print('Deselecting card');
         selectedChallans.removeWhere(
           (c) =>
               c.invNo == challan.invNo &&
@@ -256,18 +265,12 @@ class InvoiceEntryController extends GetxController {
 
         if (selectedChallans.isEmpty) {
           isSelectionMode.value = false;
-          print('No items selected, exiting selection mode');
         }
       } else {
-        print('Selecting card');
         selectedChallans.add(challan);
         selectedChallans.refresh();
       }
     }
-
-    print(
-      'After toggle - Selection mode: ${isSelectionMode.value}, Selected count: ${selectedChallans.length}',
-    );
   }
 
   bool isChallanSelected(ChallanDm challan) {
@@ -487,6 +490,11 @@ class InvoiceEntryController extends GetxController {
     isLoading.value = true;
 
     try {
+      if (selectedVehicleForFilter.value != null) {
+        selectedVehicleDisplayName.value =
+            '${selectedVehicleForFilter.value!.regNo} - ${selectedVehicleForFilter.value!.vType}';
+        selectedVehicleCode.value = selectedVehicleForFilter.value!.vCode;
+      }
       for (var challan in selectedChallans) {
         ItemTaxDm? taxData = await InvoiceEntryRepo.getItemTax(
           iCode: challan.iCode,
@@ -519,7 +527,6 @@ class InvoiceEntryController extends GetxController {
       updateGrossTotal();
       itemsToSend.refresh();
     } catch (e) {
-      print(e.toString());
       showErrorSnackbar(
         'Error',
         'Failed to fetch item tax details: ${e.toString()}',
@@ -948,7 +955,7 @@ class InvoiceEntryController extends GetxController {
 
       if (response != null && response.containsKey('message')) {
         String message = response['message'];
-
+        clearAll();
         Get.back();
         showSuccessSnackbar('Success', message);
       }
@@ -961,5 +968,47 @@ class InvoiceEntryController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void clearAll() {
+    dateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
+    selectedBookCode.value = '';
+    selectedBookDescription.value = '';
+    selectedCustomerName.value = '';
+    selectedCustomerCode.value = '';
+    selectedSalesAccountName.value = '';
+    selectedSalesAccountCode.value = '';
+    selectedTaxTypeName.value = '';
+    selectedTaxTypeCode.value = '';
+    selectedBillTypeName.value = '';
+    selectedBillTypeCode.value = '';
+    selectedInvoiceTypeName.value = '';
+    selectedInvoiceTypeCode.value = '';
+    selectedVehicleDisplayName.value = '';
+    selectedVehicleCode.value = '';
+    remarkController.clear();
+
+    isIGSTApplicable.value = false;
+    isCGSTApplicable.value = false;
+    isSGSTApplicable.value = false;
+
+    itemsToSend.clear();
+
+    ledgerDataToSend.clear();
+    customiseVoucherAmountControllers.clear();
+    customiseVoucherPercentageControllers.clear();
+
+    grossTotal.value = 0.0;
+    totalIgst.value = 0.0;
+    totalCgst.value = 0.0;
+    totalSgst.value = 0.0;
+    valueOfGoodsToSend.value = 0.0;
+    netTotalToSend.value = 0.0;
+
+    currentPage.value = 0;
+    pageController.jumpToPage(0);
+
+    selectedChallans.clear();
+    isSelectionMode.value = false;
   }
 }
