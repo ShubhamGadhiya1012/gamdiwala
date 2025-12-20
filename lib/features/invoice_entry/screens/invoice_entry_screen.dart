@@ -20,7 +20,16 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 class InvoiceEntryScreen extends StatefulWidget {
-  const InvoiceEntryScreen({super.key});
+  const InvoiceEntryScreen({
+    super.key,
+    this.isEdit = false,
+    this.invNo,
+    this.yearId,
+  });
+
+  final bool isEdit;
+  final String? invNo;
+  final int? yearId;
 
   @override
   State<InvoiceEntryScreen> createState() => _InvoiceEntryScreenState();
@@ -29,7 +38,6 @@ class InvoiceEntryScreen extends StatefulWidget {
 class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
   final InvoiceEntryController _controller = Get.put(InvoiceEntryController());
   bool _isFormMode = false;
-
   @override
   void initState() {
     super.initState();
@@ -37,6 +45,13 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
   }
 
   void _initialize() async {
+    if (widget.isEdit && widget.invNo != null && widget.yearId != null) {
+      _isFormMode = true;
+      _controller.isEditMode.value = true;
+      _controller.editInvNo.value = widget.invNo!;
+      _controller.editYearId.value = widget.yearId!;
+    }
+
     _controller.fromDateController.text = DateFormat(
       'dd-MM-yyyy',
     ).format(DateTime.now());
@@ -47,6 +62,8 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
       'dd-MM-yyyy',
     ).format(DateTime.now());
 
+    _controller.isLoading.value = true;
+
     await _controller.getBooks(dbc: 'SALE');
     await _controller.getCustomers();
     await _controller.getSalesAccounts();
@@ -54,6 +71,19 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
     _controller.getBillTypes();
     _controller.getInvoiceTypes();
     await _controller.getVehicles();
+
+    if (widget.isEdit && widget.invNo != null && widget.yearId != null) {
+      await _controller.loadEditModeData(
+        invNo: widget.invNo!,
+        yearId: widget.yearId.toString(),
+      );
+    }
+
+    _controller.isLoading.value = false;
+
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _navigateToForm() {
@@ -62,21 +92,15 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
     });
   }
 
-  void _navigateBackToList() {
-    setState(() {
-      _isFormMode = false;
-    });
-  }
-
   void _handleBackNavigation() {
     if (!_isFormMode) {
       Get.back();
-    } else if (_controller.currentPage.value == 0) {
-      _showProgressLostDialog(isBack: true);
-    } else if (_controller.currentPage.value == 1) {
-      _goToPreviousPage();
-    } else if (_controller.currentPage.value == 2) {
-      _goToPreviousPage();
+    } else {
+      if (_controller.currentPage.value == 0) {
+        _showProgressLostDialog(isBack: true);
+      } else {
+        _goToPreviousPage();
+      }
     }
   }
 
@@ -84,11 +108,19 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
     switch (_controller.currentPage.value) {
       case 0:
         if (_controller.page1FormKey.currentState!.validate()) {
-          _navigateFromPage1();
+          if (_controller.isEditMode.value) {
+            _goToNextPage();
+          } else {
+            _navigateFromPage1();
+          }
         }
         break;
       case 1:
-        _navigateFromPage2();
+        if (_controller.isEditMode.value) {
+          _goToNextPage();
+        } else {
+          _navigateFromPage2();
+        }
         break;
     }
   }
@@ -813,7 +845,7 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
               children: [
                 Expanded(
                   child: TextButton(
-                    onPressed: () => Get.back(),
+                    onPressed: () => Navigator.of(context).pop(),
                     style: TextButton.styleFrom(
                       padding: AppPaddings.combined(
                         horizontal: 20,
@@ -836,11 +868,10 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
                 Expanded(
                   child: AppButton(
                     onPressed: () {
+                      Navigator.of(context).pop();
+                      _controller.clearAll();
+
                       Get.back();
-                      if (isBack) {
-                        _controller.clearAll();
-                        _navigateBackToList();
-                      }
                     },
                     buttonColor: kColorRed,
                     title: 'Go Back',

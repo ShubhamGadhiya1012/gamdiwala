@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/features/authentication/auth/models/party_dm.dart';
 import 'package:gamdiwala/features/home/models/vehicle_dm.dart';
+import 'package:gamdiwala/features/invoice_entry/controllers/sales_invoice_controller.dart';
 import 'package:gamdiwala/features/invoice_entry/models/bill_type_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/book_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/customer_account_dm.dart';
@@ -9,8 +10,10 @@ import 'package:gamdiwala/features/invoice_entry/models/challan_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/invoice_party_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/invoice_type_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/item_tax_dm.dart';
+import 'package:gamdiwala/features/invoice_entry/models/sale_invoice_detail_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/tax_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/repos/invoice_entry_repo.dart';
+import 'package:gamdiwala/features/invoice_entry/repos/sales_invoice_repo.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
 import 'package:gamdiwala/utils/helpers/date_format_helper.dart';
 import 'package:get/get.dart';
@@ -102,6 +105,15 @@ class InvoiceEntryController extends GetxController {
   var totalSgst = 0.0.obs;
   var valueOfGoodsToSend = 0.0.obs;
   var netTotalToSend = 0.0.obs;
+
+  var isEditMode = false.obs;
+  var editInvNo = ''.obs;
+  var editYearId = 0.obs;
+
+  var saleInvoiceDetails = Rxn<SaleInvoiceDetailDm>();
+  List<SaleInvoiceData1Dm> get data1 => saleInvoiceDetails.value?.data1 ?? [];
+  List<SaleInvoiceData2Dm> get data2 => saleInvoiceDetails.value?.data2 ?? [];
+  List<SaleInvoiceData3Dm> get data3 => saleInvoiceDetails.value?.data3 ?? [];
 
   @override
   Future<void> onInit() async {
@@ -290,6 +302,26 @@ class InvoiceEntryController extends GetxController {
   void selectAllChallans() {
     selectedChallans.assignAll(challans);
     isSelectionMode.value = true;
+  }
+
+  Future<void> getSalesInvoiceDetails({
+    required String invNo,
+    required String yearId,
+  }) async {
+    isLoading.value = true;
+
+    try {
+      final fetchedDetails = await SalesInvoiceRepo.getSalesDetail(
+        invNo: invNo,
+        yearId: yearId,
+      );
+
+      saleInvoiceDetails.value = fetchedDetails;
+    } catch (e) {
+      showErrorSnackbar('Error', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> getBooks({required String dbc}) async {
@@ -932,12 +964,225 @@ class InvoiceEntryController extends GetxController {
     }).toList();
   }
 
+  Future<void> loadEditModeData({
+    required String invNo,
+    required String yearId,
+  }) async {
+    isLoading.value = true;
+
+    try {
+      await getSalesInvoiceDetails(invNo: invNo, yearId: yearId);
+
+      if (data1.isNotEmpty) {
+        final data = data1.first;
+
+        dateController.text = data.date;
+
+        if (data.bookCode.isNotEmpty && books.isNotEmpty) {
+          var book = books.firstWhereOrNull(
+            (book) => book.bookCode == data.bookCode,
+          );
+          if (book != null) {
+            selectedBookCode.value = data.bookCode;
+            selectedBookDescription.value = book.description;
+          }
+        }
+
+        if (data.pCode.isNotEmpty && customers.isNotEmpty) {
+          var customer = customers.firstWhereOrNull(
+            (customer) => customer.pCode == data.pCode,
+          );
+          if (customer != null) {
+            selectedCustomerCode.value = data.pCode;
+            selectedCustomerName.value = customer.pName;
+          }
+        }
+
+        if (data.pCodeC.isNotEmpty && salesAccounts.isNotEmpty) {
+          var account = salesAccounts.firstWhereOrNull(
+            (sa) => sa.pCode == data.pCodeC,
+          );
+          if (account != null) {
+            selectedSalesAccountCode.value = data.pCodeC;
+            selectedSalesAccountName.value = account.pName;
+          }
+        }
+
+        if (data.tCode.isNotEmpty && taxTypes.isNotEmpty) {
+          var taxType = taxTypes.firstWhereOrNull(
+            (tax) => tax.tCode == data.tCode,
+          );
+          if (taxType != null) {
+            selectedTaxTypeCode.value = data.tCode;
+            selectedTaxTypeName.value = taxType.tName;
+            isIGSTApplicable.value = taxType.igstYn;
+            isCGSTApplicable.value = taxType.cgstYn;
+            isSGSTApplicable.value = taxType.sgstYn;
+          }
+        }
+
+        if (data.gstBillType.toString().isNotEmpty && billTypes.isNotEmpty) {
+          var billType = billTypes.firstWhereOrNull(
+            (bill) => bill.billCode == data.gstBillType.toString(),
+          );
+          if (billType != null) {
+            selectedBillTypeCode.value = data.gstBillType.toString();
+            selectedBillTypeName.value = billType.billName;
+          }
+        }
+
+        if (data.typeOfInvoice.isNotEmpty && invoiceTypes.isNotEmpty) {
+          var invType = invoiceTypes.firstWhereOrNull(
+            (invType) => invType.invoiceTypeCode == data.typeOfInvoice,
+          );
+          if (invType != null) {
+            selectedInvoiceTypeCode.value = data.typeOfInvoice;
+            selectedInvoiceTypeName.value = invType.invoiceTypeName;
+          }
+        }
+
+        if (data.vehicleCode.isNotEmpty && vehicles.isNotEmpty) {
+          var vehicle = vehicles.firstWhereOrNull(
+            (v) => v.vCode == data.vehicleCode,
+          );
+          if (vehicle != null) {
+            selectedVehicleCode.value = data.vehicleCode;
+            selectedVehicleDisplayName.value =
+                '${vehicle.regNo} - ${vehicle.vType}';
+          }
+        }
+
+        remarkController.text = data.remarks;
+      }
+
+      itemsToSend.clear();
+      if (data2.isNotEmpty) {
+        for (var item in data2) {
+          Map<String, dynamic> itemData = {
+            "SrNo": item.srNo.toString(),
+            "ICode": item.iCode,
+            "INAME": item.iName,
+            "ItemPack": item.itemPack.toString(),
+            "CaratNos": item.caratNos.toString(),
+            "Qty": item.qty.toString(),
+            "Rate": item.rate.toStringAsFixed(2),
+            "Amount": item.amount.toStringAsFixed(2),
+            "CaratQty": item.caratQty.toString(),
+            "LRValue": item.lrValue.toStringAsFixed(2),
+            "Fat": item.fat.toStringAsFixed(2),
+            "OrderSrNo": item.orderSrNo.toString(),
+            "OrderNo": item.orderNo,
+            "ChallanItemSrNo": item.challanItemSrNo?.toString() ?? "",
+            "ChallanNo": item.challanNo,
+            "IGSTPerc": item.igstPerc,
+            "CGSTPerc": item.cgstPerc,
+            "SGSTPerc": item.sgstPerc,
+          };
+          itemsToSend.add(itemData);
+        }
+        updateGrossTotal();
+        itemsToSend.refresh();
+      }
+
+      if (data3.isNotEmpty) {
+        await getCustomiseVoucher();
+        await Future.delayed(const Duration(milliseconds: 50));
+        ledgerDataToSend.clear();
+        customiseVoucherAmountControllers.clear();
+        customiseVoucherPercentageControllers.clear();
+
+        ledgerDataToSend.add({
+          'SRNO': 1,
+          'DESC': 'Gross Total',
+          'FORMULA': '',
+          'VISIBLE': true,
+          'PR': 'R',
+          'PERC': '0',
+          'AMOUNT': grossTotal.value.toStringAsFixed(2),
+          'NT': 'D',
+          'PCODE': selectedCustomerCode.value,
+          'ADDLESS': 0,
+        });
+
+        for (var ledgerItem in data3) {
+          if (ledgerItem.description == 'Net Total') {
+            continue;
+          }
+
+          ledgerDataToSend.add({
+            'SRNO': ledgerItem.srNo + 2,
+            'DESC': ledgerItem.description,
+            'FORMULA': ledgerItem.formula,
+            'VISIBLE': true,
+            'PR': ledgerItem.pr,
+            'PERC': ledgerItem.perc.toString(),
+            'AMOUNT': ledgerItem.amount.toString(),
+            'NT': ledgerItem.nt,
+            'PCODE': selectedCustomerCode.value,
+            'ADDLESS':
+                ledgerItem.description == 'Discount' ||
+                    ledgerItem.description == 'NoTaxDisc' ||
+                    ledgerItem.description == 'Round [-]'
+                ? 1
+                : 0,
+          });
+        }
+
+        ledgerDataToSend.add({
+          'SRNO': 2,
+          'DESC': 'Net Total',
+          'FORMULA':
+              'GrossAmt - Discount + P.F. + Freight + Other + IGST + SGST + CGST + NoTaxOth - NoTaxDisc + TCS. - Round [-] + Round [+] + TCS_IT ',
+          'VISIBLE': true,
+          'PR': 'R',
+          'PERC': '0',
+          'AMOUNT': '0',
+          'NT': 'C',
+          'PCODE': selectedCustomerCode.value,
+          'ADDLESS': 0,
+        });
+
+        for (var voucher in ledgerDataToSend) {
+          var controller = TextEditingController(text: voucher['AMOUNT']);
+          controller.addListener(() {
+            voucher['AMOUNT'] = controller.text;
+            updateLedger();
+          });
+          customiseVoucherAmountControllers[voucher['DESC']] = controller;
+        }
+
+        for (var voucher in ledgerDataToSend) {
+          var percController = TextEditingController(text: voucher['PERC']);
+          percController.addListener(() {
+            voucher['PERC'] = percController.text;
+            updateLedger();
+          });
+          customiseVoucherPercentageControllers[voucher['DESC']] =
+              percController;
+        }
+
+        customiseVoucherAmountControllers['Gross Total']!.text = grossTotal
+            .value
+            .toStringAsFixed(2);
+
+        updateLedger();
+
+        update();
+        ledgerDataToSend.refresh();
+      }
+    } catch (e) {
+      showErrorSnackbar('Error', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<void> saveSalesEntry() async {
     isLoading.value = true;
 
     try {
       var response = await InvoiceEntryRepo.saveSalesEntry(
-        salesInvo: "",
+        salesInvo: isEditMode.value ? editInvNo.value : "",
         bookCode: selectedBookCode.value,
         date: convertToApiDateFormat(dateController.text),
         amount: netTotalToSend.value.toStringAsFixed(2),
@@ -956,7 +1201,16 @@ class InvoiceEntryController extends GetxController {
       if (response != null && response.containsKey('message')) {
         String message = response['message'];
         clearAll();
+        Get.back();
+        if (isEditMode.value) {
+          Get.back();
+        }
         showSuccessSnackbar('Success', message);
+
+        if (Get.isRegistered<SalesInvoiceController>()) {
+          final salesController = Get.find<SalesInvoiceController>();
+          await salesController.getSales();
+        }
       }
     } catch (e) {
       if (e is Map<String, dynamic>) {
@@ -1009,5 +1263,10 @@ class InvoiceEntryController extends GetxController {
 
     selectedChallans.clear();
     isSelectionMode.value = false;
+
+    isEditMode.value = false;
+    editInvNo.value = '';
+    editYearId.value = 0;
+    saleInvoiceDetails.value = null;
   }
 }
