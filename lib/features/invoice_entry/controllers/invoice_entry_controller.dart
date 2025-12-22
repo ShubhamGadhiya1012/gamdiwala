@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/features/authentication/auth/models/party_dm.dart';
 import 'package:gamdiwala/features/home/models/vehicle_dm.dart';
-import 'package:gamdiwala/features/invoice_entry/controllers/sales_invoice_controller.dart';
+import 'package:gamdiwala/features/invoice_entry/controllers/invoice_controller.dart';
 import 'package:gamdiwala/features/invoice_entry/models/bill_type_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/book_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/customer_account_dm.dart';
@@ -13,7 +13,7 @@ import 'package:gamdiwala/features/invoice_entry/models/item_tax_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/sale_invoice_detail_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/tax_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/repos/invoice_entry_repo.dart';
-import 'package:gamdiwala/features/invoice_entry/repos/sales_invoice_repo.dart';
+import 'package:gamdiwala/features/invoice_entry/repos/invoice_repo.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
 import 'package:gamdiwala/utils/helpers/date_format_helper.dart';
 import 'package:get/get.dart';
@@ -311,7 +311,7 @@ class InvoiceEntryController extends GetxController {
     isLoading.value = true;
 
     try {
-      final fetchedDetails = await SalesInvoiceRepo.getSalesDetail(
+      final fetchedDetails = await InvoiceRepo.getSalesDetail(
         invNo: invNo,
         yearId: yearId,
       );
@@ -368,6 +368,11 @@ class InvoiceEntryController extends GetxController {
       (customer) => customer.pName == customerName,
     );
     selectedCustomerCode.value = selectedCustomerObj.pCode;
+    if (ledgerDataToSend.isNotEmpty) {
+      for (var ledger in ledgerDataToSend) {
+        ledger['PCODE'] = selectedCustomerCode.value;
+      }
+    }
   }
 
   Future<void> getSalesAccounts() async {
@@ -430,15 +435,25 @@ class InvoiceEntryController extends GetxController {
     }
   }
 
-  void onTaxTypeSelected(String? taxTypeName) {
+  void onTaxTypeSelected(String? taxTypeName) async {
     selectedTaxTypeName.value = taxTypeName!;
+
     final selectedTaxTypeObj = taxTypes.firstWhere(
       (taxType) => taxType.tName == taxTypeName,
     );
+
     selectedTaxTypeCode.value = selectedTaxTypeObj.tCode;
     isIGSTApplicable.value = selectedTaxTypeObj.igstYn;
     isCGSTApplicable.value = selectedTaxTypeObj.cgstYn;
     isSGSTApplicable.value = selectedTaxTypeObj.sgstYn;
+
+    if (itemsToSend.isNotEmpty) {
+      updateGrossTotal();
+
+      if (ledgerDataToSend.isNotEmpty) {
+        updateLedger();
+      }
+    }
   }
 
   final List<Map<String, String>> staticBillTypes = [
@@ -702,9 +717,9 @@ class InvoiceEntryController extends GetxController {
             customiseVoucherAmountControllers['Discount']?.text ?? '0',
           ) ??
           0.0;
-
-      if (discountAmount > 0) {
-        customiseVoucherPercentageControllers['Discount']?.text = '0';
+      if (discountPercentage == 0.0) {
+        customiseVoucherAmountControllers['Discount']?.text = '0.00';
+        discountAmount = 0.0;
       }
     }
 
@@ -1086,86 +1101,7 @@ class InvoiceEntryController extends GetxController {
 
       if (data3.isNotEmpty) {
         await getCustomiseVoucher();
-        await Future.delayed(const Duration(milliseconds: 50));
-        ledgerDataToSend.clear();
-        customiseVoucherAmountControllers.clear();
-        customiseVoucherPercentageControllers.clear();
-
-        ledgerDataToSend.add({
-          'SRNO': 1,
-          'DESC': 'Gross Total',
-          'FORMULA': '',
-          'VISIBLE': true,
-          'PR': 'R',
-          'PERC': '0',
-          'AMOUNT': grossTotal.value.toStringAsFixed(2),
-          'NT': 'D',
-          'PCODE': selectedCustomerCode.value,
-          'ADDLESS': 0,
-        });
-
-        for (var ledgerItem in data3) {
-          if (ledgerItem.description == 'Net Total') {
-            continue;
-          }
-
-          ledgerDataToSend.add({
-            'SRNO': ledgerItem.srNo + 2,
-            'DESC': ledgerItem.description,
-            'FORMULA': ledgerItem.formula,
-            'VISIBLE': true,
-            'PR': ledgerItem.pr,
-            'PERC': ledgerItem.perc.toString(),
-            'AMOUNT': ledgerItem.amount.toString(),
-            'NT': ledgerItem.nt,
-            'PCODE': selectedCustomerCode.value,
-            'ADDLESS':
-                ledgerItem.description == 'Discount' ||
-                    ledgerItem.description == 'NoTaxDisc' ||
-                    ledgerItem.description == 'Round [-]'
-                ? 1
-                : 0,
-          });
-        }
-
-        ledgerDataToSend.add({
-          'SRNO': 2,
-          'DESC': 'Net Total',
-          'FORMULA':
-              'GrossAmt - Discount + P.F. + Freight + Other + IGST + SGST + CGST + NoTaxOth - NoTaxDisc + TCS. - Round [-] + Round [+] + TCS_IT ',
-          'VISIBLE': true,
-          'PR': 'R',
-          'PERC': '0',
-          'AMOUNT': '0',
-          'NT': 'C',
-          'PCODE': selectedCustomerCode.value,
-          'ADDLESS': 0,
-        });
-
-        for (var voucher in ledgerDataToSend) {
-          var controller = TextEditingController(text: voucher['AMOUNT']);
-          controller.addListener(() {
-            voucher['AMOUNT'] = controller.text;
-            updateLedger();
-          });
-          customiseVoucherAmountControllers[voucher['DESC']] = controller;
-        }
-
-        for (var voucher in ledgerDataToSend) {
-          var percController = TextEditingController(text: voucher['PERC']);
-          percController.addListener(() {
-            voucher['PERC'] = percController.text;
-            updateLedger();
-          });
-          customiseVoucherPercentageControllers[voucher['DESC']] =
-              percController;
-        }
-
-        customiseVoucherAmountControllers['Gross Total']!.text = grossTotal
-            .value
-            .toStringAsFixed(2);
-
-        updateLedger();
+        fillLedgerDataToSendForEdit(data3);
 
         update();
         ledgerDataToSend.refresh();
@@ -1175,6 +1111,113 @@ class InvoiceEntryController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void fillLedgerDataToSendForEdit(List<SaleInvoiceData3Dm> existingLedger) {
+    ledgerDataToSend.clear();
+    customiseVoucherAmountControllers.clear();
+    customiseVoucherPercentageControllers.clear();
+
+    Map<String, SaleInvoiceData3Dm> existingMap = {};
+    for (var item in existingLedger) {
+      existingMap[item.description] = item;
+    }
+
+    ledgerDataToSend.add({
+      'SRNO': 1,
+      'DESC': 'Gross Total',
+      'FORMULA': '',
+      'VISIBLE': true,
+      'PR': 'R',
+      'PERC': '0',
+      'AMOUNT': grossTotal.value.toStringAsFixed(2),
+      'NT': 'D',
+      'PCODE': selectedCustomerCode.value,
+      'ADDLESS': 0,
+    });
+
+    for (var voucher in customiseVoucher.where((v) => v.srNo != 15)) {
+      var existingData = existingMap[voucher.description];
+
+      ledgerDataToSend.add({
+        'SRNO': voucher.srNo + 2,
+        'DESC': voucher.description,
+        'FORMULA': voucher.formula,
+        'VISIBLE': voucher.visible,
+        'PR': voucher.pr,
+        'PERC': existingData?.perc.toString() ?? '0',
+        'AMOUNT': existingData?.amount.toString() ?? '0',
+        'NT': voucher.nt,
+        'PCODE': selectedCustomerCode.value,
+        'ADDLESS': voucher.addLess,
+      });
+    }
+
+    ledgerDataToSend.add({
+      'SRNO': 2,
+      'DESC': 'Net Total',
+      'FORMULA':
+          'GrossAmt - Discount + P.F. + Freight + Other + IGST + SGST + CGST + NoTaxOth - NoTaxDisc + TCS. - Round [-] + Round [+] + TCS_IT ',
+      'VISIBLE': true,
+      'PR': 'R',
+      'PERC': '0',
+      'AMOUNT': '0',
+      'NT': 'C',
+      'PCODE': selectedCustomerCode.value,
+      'ADDLESS': 0,
+    });
+
+    for (var voucher in ledgerDataToSend) {
+      var controller = TextEditingController(text: voucher['AMOUNT']);
+      customiseVoucherAmountControllers[voucher['DESC']] = controller;
+    }
+
+    for (var voucher in ledgerDataToSend) {
+      var percController = TextEditingController(text: voucher['PERC']);
+      customiseVoucherPercentageControllers[voucher['DESC']] = percController;
+    }
+
+    for (var voucher in ledgerDataToSend) {
+      var controller = customiseVoucherAmountControllers[voucher['DESC']]!;
+
+      controller.addListener(() {
+        voucher['AMOUNT'] = controller.text;
+
+        if (voucher['DESC'] == 'Discount' && controller.text.isNotEmpty) {
+          double amount = double.tryParse(controller.text) ?? 0.0;
+          double currentPerc =
+              double.tryParse(
+                customiseVoucherPercentageControllers['Discount']?.text ?? '0',
+              ) ??
+              0.0;
+
+          if (amount > 0 && currentPerc > 0) {
+            double calculatedAmount = (grossTotal.value * currentPerc) / 100;
+
+            if ((amount - calculatedAmount).abs() > 0.01) {
+              customiseVoucherPercentageControllers['Discount']!.text = '0';
+            }
+          }
+        }
+
+        updateLedger();
+      });
+    }
+
+    for (var voucher in ledgerDataToSend) {
+      var percController =
+          customiseVoucherPercentageControllers[voucher['DESC']]!;
+
+      percController.addListener(() {
+        voucher['PERC'] = percController.text;
+        updateLedger();
+      });
+    }
+
+    customiseVoucherAmountControllers['Gross Total']!.text = grossTotal.value
+        .toStringAsFixed(2);
+
+    updateLedger();
   }
 
   Future<void> saveSalesEntry() async {
@@ -1207,8 +1250,8 @@ class InvoiceEntryController extends GetxController {
         }
         showSuccessSnackbar('Success', message);
 
-        if (Get.isRegistered<SalesInvoiceController>()) {
-          final salesController = Get.find<SalesInvoiceController>();
+        if (Get.isRegistered<InvoiceController>()) {
+          final salesController = Get.find<InvoiceController>();
           await salesController.getSales();
         }
       }

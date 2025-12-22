@@ -1,8 +1,10 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
-import 'package:gamdiwala/features/invoice_entry/controllers/sales_invoice_controller.dart';
+import 'package:gamdiwala/features/invoice_entry/controllers/invoice_controller.dart';
 import 'package:gamdiwala/features/invoice_entry/screens/invoice_entry_screen.dart';
-import 'package:gamdiwala/features/invoice_entry/widgets/sale_invoice_card.dart';
+import 'package:gamdiwala/features/invoice_entry/widgets/invoice_card.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
 import 'package:gamdiwala/styles/text_styles.dart';
 import 'package:gamdiwala/utils/screen_utils/app_paddings.dart';
@@ -11,10 +13,10 @@ import 'package:gamdiwala/widgets/app_loading_overlay.dart';
 import 'package:gamdiwala/widgets/app_text_form_field.dart';
 import 'package:get/get.dart';
 
-class SalesInvoiceScreen extends StatelessWidget {
-  SalesInvoiceScreen({super.key});
+class InvoiceScreen extends StatelessWidget {
+  InvoiceScreen({super.key});
 
-  final SalesInvoiceController _controller = Get.put(SalesInvoiceController());
+  final InvoiceController _controller = Get.put(InvoiceController());
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +106,7 @@ class SalesInvoiceScreen extends StatelessWidget {
                                   itemCount: _controller.sales.length,
                                   itemBuilder: (context, index) {
                                     final sale = _controller.sales[index];
-                                    return SaleInvoiceCard(sale: sale);
+                                    return InvoiceCard(sale: sale);
                                   },
                                 ),
                               ),
@@ -127,13 +129,31 @@ class SalesInvoiceScreen extends StatelessWidget {
                 ),
               ),
             ),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () {
-                Get.to(() => const InvoiceEntryScreen(isEdit: false));
-              },
-              shape: const CircleBorder(),
-              backgroundColor: kColorLightGrey,
-              child: Icon(Icons.add, color: kColorPrimary, size: 25),
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerFloat,
+            floatingActionButton: Container(
+              height: 56,
+              margin: const EdgeInsets.only(bottom: 10),
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  Get.to(() => const InvoiceEntryScreen(isEdit: false));
+                },
+                backgroundColor: kColorPrimary,
+                elevation: 4,
+                label: Row(
+                  children: [
+                    Icon(Icons.add, color: kColorWhite, size: 24),
+                    AppSpaces.h8,
+                    Text(
+                      'New Invoice',
+                      style: TextStyles.kBoldMontserrat(
+                        fontSize: FontSizes.k16FontSize,
+                        color: kColorWhite,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

@@ -3,7 +3,7 @@ import 'package:gamdiwala/features/invoice_entry/models/sale_invoice_detail_dm.d
 import 'package:gamdiwala/services/api_service.dart';
 import 'package:gamdiwala/utils/helpers/secure_storage_helper.dart';
 
-class SalesInvoiceRepo {
+class InvoiceRepo {
   static Future<List<SaleInvoiceDm>> getSales({
     int pageNumber = 1,
     int pageSize = 10,

@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/features/invoice_entry/models/sale_invoice_dm.dart';
@@ -9,8 +11,8 @@ import 'package:gamdiwala/utils/screen_utils/app_spacings.dart';
 import 'package:gamdiwala/widgets/app_card.dart';
 import 'package:get/get.dart';
 
-class SaleInvoiceCard extends StatelessWidget {
-  const SaleInvoiceCard({super.key, required this.sale});
+class InvoiceCard extends StatelessWidget {
+  const InvoiceCard({super.key, required this.sale});
 
   final SaleInvoiceDm sale;
 

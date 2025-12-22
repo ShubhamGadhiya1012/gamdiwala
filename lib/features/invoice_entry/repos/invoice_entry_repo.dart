@@ -18,9 +18,9 @@ class InvoiceEntryRepo {
     required String billPeriod,
   }) async {
     String? token = await SecureStorageHelper.read('token');
-    print(fromDate);
-    print(toDate);
-    print(billPeriod);
+    // print(fromDate);
+    // print(toDate);
+    // print(billPeriod);
 
     try {
       final response = await ApiService.getRequest(

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/features/invoice_entry/models/sale_invoice_dm.dart';
-import 'package:gamdiwala/features/invoice_entry/repos/sales_invoice_repo.dart';
+import 'package:gamdiwala/features/invoice_entry/repos/invoice_repo.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
 import 'package:get/get.dart';
 
-class SalesInvoiceController extends GetxController {
+class InvoiceController extends GetxController {
   var isLoading = true.obs;
   var isLoadingMore = false.obs;
   var hasMoreData = true.obs;
@@ -47,7 +47,7 @@ class SalesInvoiceController extends GetxController {
         isLoadingMore.value = true;
       }
 
-      var fetchedSales = await SalesInvoiceRepo.getSales(
+      var fetchedSales = await InvoiceRepo.getSales(
         pageNumber: currentPage,
         pageSize: pageSize,
         searchText: searchQuery.value,

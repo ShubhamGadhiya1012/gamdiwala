@@ -74,7 +74,7 @@ class InvoiceChallanCard extends StatelessWidget {
 
               Padding(
                 padding: isSelectionMode
-                    ? const EdgeInsets.only(left: 40)
+                    ? AppPaddings.custom(left: 40)
                     : EdgeInsets.zero,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

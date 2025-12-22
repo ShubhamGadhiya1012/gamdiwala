@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/styles/font_sizes.dart';
@@ -116,7 +118,6 @@ class InvoiceItemCard extends StatelessWidget {
           AppSpaces.v12,
           Divider(height: 1, color: Colors.grey.shade300),
           AppSpaces.v12,
-
           Wrap(
             spacing: 12,
             runSpacing: 8,

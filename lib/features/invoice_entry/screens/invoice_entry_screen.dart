@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/constants/color_constants.dart';
 import 'package:gamdiwala/features/invoice_entry/controllers/invoice_entry_controller.dart';
@@ -52,17 +54,9 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
       _controller.editYearId.value = widget.yearId!;
     }
 
-    _controller.fromDateController.text = DateFormat(
-      'dd-MM-yyyy',
-    ).format(DateTime.now());
-    _controller.toDateController.text = DateFormat(
-      'dd-MM-yyyy',
-    ).format(DateTime.now());
     _controller.dateController.text = DateFormat(
       'dd-MM-yyyy',
     ).format(DateTime.now());
-
-    _controller.isLoading.value = true;
 
     await _controller.getBooks(dbc: 'SALE');
     await _controller.getCustomers();
@@ -78,8 +72,6 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
         yearId: widget.yearId.toString(),
       );
     }
-
-    _controller.isLoading.value = false;
 
     if (mounted) {
       setState(() {});
@@ -136,27 +128,38 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
       return;
     }
 
-    await _controller.getCustomiseVoucher();
-    if (_controller.customiseVoucher.isNotEmpty) {
-      _controller.fillLedgerDataToSend();
-      _controller.customiseVoucherAmountControllers['Gross Total']!.text =
-          _controller.grossTotal.value.toStringAsFixed(2);
+    if (_controller.ledgerDataToSend.isEmpty) {
+      if (_controller.isEditMode.value) {
+        if (_controller.data3.isNotEmpty) {
+          _controller.fillLedgerDataToSendForEdit(_controller.data3);
+        }
+      } else {
+        await _controller.getCustomiseVoucher();
+        if (_controller.customiseVoucher.isNotEmpty) {
+          _controller.fillLedgerDataToSend();
+          _controller.customiseVoucherAmountControllers['Gross Total']!.text =
+              _controller.grossTotal.value.toStringAsFixed(2);
 
-      if (_controller.isIGSTApplicable.value) {
-        _controller.customiseVoucherAmountControllers['IGST']!.text =
-            _controller.totalIgst.value.toStringAsFixed(2);
-      }
+          if (_controller.isIGSTApplicable.value) {
+            _controller.customiseVoucherAmountControllers['IGST']!.text =
+                _controller.totalIgst.value.toStringAsFixed(2);
+          }
 
-      if (_controller.isSGSTApplicable.value) {
-        _controller.customiseVoucherAmountControllers['SGST']!.text =
-            _controller.totalSgst.value.toStringAsFixed(2);
-      }
+          if (_controller.isSGSTApplicable.value) {
+            _controller.customiseVoucherAmountControllers['SGST']!.text =
+                _controller.totalSgst.value.toStringAsFixed(2);
+          }
 
-      if (_controller.isCGSTApplicable.value) {
-        _controller.customiseVoucherAmountControllers['CGST']!.text =
-            _controller.totalCgst.value.toStringAsFixed(2);
+          if (_controller.isCGSTApplicable.value) {
+            _controller.customiseVoucherAmountControllers['CGST']!.text =
+                _controller.totalCgst.value.toStringAsFixed(2);
+          }
+        }
       }
+    } else {
+      _controller.updateLedger();
     }
+
     _goToNextPage();
   }
 
@@ -432,7 +435,7 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
             ),
             AppSpaces.v8,
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: AppPaddings.combined(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: kColorPrimary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
@@ -444,7 +447,7 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
               child: Row(
                 children: [
                   Icon(Icons.info_outline, size: 18, color: kColorPrimary),
-                  const SizedBox(width: 8),
+                  AppSpaces.h8,
                   Expanded(
                     child: Text(
                       'Long press on card to select multiple items',
