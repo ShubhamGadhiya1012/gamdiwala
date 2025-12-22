@@ -596,6 +596,31 @@ class InvoiceEntryController extends GetxController {
     }
   }
 
+  double calculateBaseAmount(
+    double amountWithGst,
+    double igstPerc,
+    double cgstPerc,
+    double sgstPerc,
+  ) {
+    double totalTaxPerc = 0.0;
+
+    if (isIGSTApplicable.value) {
+      totalTaxPerc += igstPerc;
+    }
+    if (isCGSTApplicable.value) {
+      totalTaxPerc += cgstPerc;
+    }
+    if (isSGSTApplicable.value) {
+      totalTaxPerc += sgstPerc;
+    }
+
+    if (totalTaxPerc > 0) {
+      return amountWithGst / (1 + (totalTaxPerc / 100));
+    }
+
+    return amountWithGst;
+  }
+
   void updateGrossTotal() {
     grossTotal.value = 0.0;
     totalIgst.value = 0.0;
@@ -603,15 +628,23 @@ class InvoiceEntryController extends GetxController {
     totalCgst.value = 0.0;
 
     for (var item in itemsToSend) {
-      double amount = double.tryParse(item["Amount"].toString()) ?? 0.00;
+      double amountWithGst = double.tryParse(item["Amount"].toString()) ?? 0.00;
       double igstRate = item["IGSTPerc"] ?? 0.00;
       double cgstRate = item["CGSTPerc"] ?? 0.00;
       double sgstRate = item["SGSTPerc"] ?? 0.00;
 
-      grossTotal.value += amount;
-      totalIgst.value += ((amount * igstRate) / 100);
-      totalSgst.value += ((amount * cgstRate) / 100);
-      totalCgst.value += ((amount * sgstRate) / 100);
+      double baseAmount = calculateBaseAmount(
+        amountWithGst,
+        igstRate,
+        cgstRate,
+        sgstRate,
+      );
+
+      grossTotal.value += baseAmount;
+
+      totalIgst.value += ((baseAmount * igstRate) / 100);
+      totalSgst.value += ((baseAmount * cgstRate) / 100);
+      totalCgst.value += ((baseAmount * cgstRate) / 100);
     }
 
     update();
@@ -814,23 +847,24 @@ class InvoiceEntryController extends GetxController {
     totalCgst.value = 0.0;
 
     for (var item in itemsToSend) {
-      double originalAmount = double.tryParse(item["Amount"].toString()) ?? 0.0;
+      double amountWithGst = double.tryParse(item["Amount"].toString()) ?? 0.0;
+      double igst = double.tryParse(item["IGSTPerc"]?.toString() ?? '0') ?? 0.0;
+      double cgst = double.tryParse(item["CGSTPerc"]?.toString() ?? '0') ?? 0.0;
+      double sgst = double.tryParse(item["SGSTPerc"]?.toString() ?? '0') ?? 0.0;
+
+      double baseAmount = calculateBaseAmount(amountWithGst, igst, cgst, sgst);
+
       double itemDiscount =
-          (originalAmount / totalOriginalGrossAmount) * discountAmount;
-      double discountedAmount = originalAmount - itemDiscount;
-      double pfShare = (originalAmount / totalOriginalGrossAmount) * pf;
-      double freightShare =
-          (originalAmount / totalOriginalGrossAmount) * freight;
-      double otherShare = (originalAmount / totalOriginalGrossAmount) * other;
+          (baseAmount / totalOriginalGrossAmount) * discountAmount;
+      double discountedAmount = baseAmount - itemDiscount;
+      double pfShare = (baseAmount / totalOriginalGrossAmount) * pf;
+      double freightShare = (baseAmount / totalOriginalGrossAmount) * freight;
+      double otherShare = (baseAmount / totalOriginalGrossAmount) * other;
 
       double amountWithCharges = discountedAmount;
       amountWithCharges += (pfNT == 'C') ? pfShare : -pfShare;
       amountWithCharges += (freightNT == 'C') ? freightShare : -freightShare;
       amountWithCharges += (otherNT == 'C') ? otherShare : -otherShare;
-
-      double igst = double.tryParse(item["IGSTPerc"]?.toString() ?? '0') ?? 0.0;
-      double cgst = double.tryParse(item["CGSTPerc"]?.toString() ?? '0') ?? 0.0;
-      double sgst = double.tryParse(item["SGSTPerc"]?.toString() ?? '0') ?? 0.0;
 
       if (isIGSTApplicable.value) {
         totalIgst.value += ((amountWithCharges * igst) / 100);
@@ -842,7 +876,6 @@ class InvoiceEntryController extends GetxController {
         totalSgst.value += ((amountWithCharges * sgst) / 100);
       }
     }
-
     double discountedGrossTotal = grossTotal.value - discountAmount;
     double valueOfGoods = discountedGrossTotal;
     valueOfGoods += (pfNT == 'C') ? pf : -pf;
@@ -961,10 +994,33 @@ class InvoiceEntryController extends GetxController {
       int srNo = ledger["SRNO"];
       String nt = ledger["NT"];
 
-      if (ledger["DESC"] == "Gross Total") {
+      final String ledgerDesc = ledger["DESC"] as String;
+      String pCode = "";
+
+      if (ledgerDesc == "Gross Total" || ledgerDesc == "Net Total") {
+        pCode = selectedCustomerCode.value;
+      } else {
+        final customiseVoucherItem = customiseVoucher.firstWhereOrNull(
+          (voucher) => voucher.description == ledgerDesc,
+        );
+
+        if (customiseVoucherItem != null) {
+          String voucherPCode = customiseVoucherItem.pCode.trim();
+
+          if (voucherPCode.isEmpty || voucherPCode == "< SALES >") {
+            pCode = selectedCustomerCode.value;
+          } else {
+            pCode = voucherPCode;
+          }
+        } else {
+          pCode = selectedCustomerCode.value;
+        }
+      }
+
+      if (ledgerDesc == "Gross Total") {
         srNo = 2;
         nt = "C";
-      } else if (ledger["DESC"] == "Net Total") {
+      } else if (ledgerDesc == "Net Total") {
         srNo = 1;
         nt = "D";
       }
@@ -974,7 +1030,7 @@ class InvoiceEntryController extends GetxController {
         "PERC": ledger["PERC"].toString(),
         "AMOUNT": ledger["AMOUNT"].toString(),
         "NT": nt,
-        "PCODE": ledger["PCODE"],
+        "PCODE": pCode,
       };
     }).toList();
   }

@@ -248,7 +248,7 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
 
   PreferredSizeWidget _buildFormAppBar() {
     return AppAppbar(
-      title: 'Invoice Entry Form',
+      title: 'Invoice Entry',
       leading: IconButton(
         onPressed: () => _handleBackNavigation(),
         icon: Icon(Icons.arrow_back_ios, color: kColorPrimary, size: 20),
@@ -829,7 +829,7 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
               Text(
                 'Progress Will Be Lost',
                 style: TextStyles.kBoldMontserrat(
-                  fontSize: FontSizes.k18FontSize,
+                  fontSize: FontSizes.k14FontSize,
                   color: kColorTextPrimary,
                 ),
               ),
@@ -874,7 +874,13 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
                       Navigator.of(context).pop();
                       _controller.clearAll();
 
-                      Get.back();
+                      if (widget.isEdit) {
+                        Get.back();
+                      } else {
+                        setState(() {
+                          _isFormMode = false;
+                        });
+                      }
                     },
                     buttonColor: kColorRed,
                     title: 'Go Back',
