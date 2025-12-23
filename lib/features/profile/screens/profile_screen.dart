@@ -253,7 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       mode: LaunchMode.externalApplication,
                     );
                   } else {
-                    print('Could not launch $url');
+                  //  print('Could not launch $url');
                   }
                 },
               ),

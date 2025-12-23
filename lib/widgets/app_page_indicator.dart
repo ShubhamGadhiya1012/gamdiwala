@@ -4,25 +4,25 @@ import 'package:gamdiwala/styles/font_sizes.dart';
 import 'package:gamdiwala/styles/text_styles.dart';
 import 'package:gamdiwala/utils/screen_utils/app_paddings.dart';
 
-class ModernStepIndicator extends StatefulWidget {
+class AppPageIndicator extends StatefulWidget {
   final int currentStep;
   final int totalSteps;
 
-  const ModernStepIndicator({
+  const AppPageIndicator({
     super.key,
     required this.currentStep,
     this.totalSteps = 4,
   });
 
   @override
-  State<ModernStepIndicator> createState() => _ModernStepIndicatorState();
+  State<AppPageIndicator> createState() => _AppPageIndicatorState();
 }
 
-class _ModernStepIndicatorState extends State<ModernStepIndicator> {
+class _AppPageIndicatorState extends State<AppPageIndicator> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: AppPaddings.p10,
+      padding: AppPaddings.custom(bottom: 10, left: 10, right: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(widget.totalSteps * 2 - 1, (index) {
@@ -47,13 +47,13 @@ class _ModernStepIndicatorState extends State<ModernStepIndicator> {
 
     if (isCompleted) {
       decoration = BoxDecoration(
-        color: kColorTextPrimary,
+        color: kColorPrimary,
         borderRadius: BorderRadius.circular(10),
       );
       circleContent = const Icon(Icons.check, color: kColorWhite, size: 20);
     } else if (isActive) {
       decoration = BoxDecoration(
-        color: kColorTextPrimary,
+        color: kColorPrimary,
         borderRadius: BorderRadius.circular(10),
       );
       circleContent = Text(
@@ -96,7 +96,7 @@ class _ModernStepIndicatorState extends State<ModernStepIndicator> {
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: isCompleted || isActive ? kColorTextPrimary : kColorGrey,
+        color: isCompleted || isActive ? kColorPrimary : kColorGrey,
         borderRadius: BorderRadius.circular(2),
       ),
     );

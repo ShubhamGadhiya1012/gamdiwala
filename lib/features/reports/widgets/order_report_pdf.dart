@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:gamdiwala/features/reports/models/order_report_dm.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -18,44 +19,77 @@ Future<void> generateOrderReportPDF(
   final blackColor = PdfColor.fromHex('#000000');
   final contrastNavy = PdfColor.fromHex('#1E3A8A');
   final lightGray = PdfColor.fromHex('#F8F9FA');
-  final headerColor = PdfColor.fromHex('#138DB6');
   final totalRowColor = PdfColor.fromHex('#B2F2C2');
+  final borderColor = PdfColor.fromHex('#D1D5DB');
 
-  late Map<String, List<OrderReportDm>> groupedData;
+  final fontData = await rootBundle.load('assets/fonts/Montserrat-Regular.ttf');
+  final fontBoldData = await rootBundle.load(
+    'assets/fonts/Montserrat-Bold.ttf',
+  );
+  final ttf = pw.Font.ttf(fontData);
+  final ttfBold = pw.Font.ttf(fontBoldData);
 
-  if (type == 'SUMMARY') {
-    groupedData = {'All Orders': data};
-  } else {
-    groupedData = {'All Orders': data};
+  final int chunkSize = type == 'WITH CHALLAN' ? 25 : 35;
+
+  final List<List<OrderReportDm>> chunks = [];
+  for (int i = 0; i < data.length; i += chunkSize) {
+    chunks.add(
+      data.sublist(
+        i,
+        i + chunkSize > data.length ? data.length : i + chunkSize,
+      ),
+    );
   }
 
-  pdf.addPage(
-    pw.MultiPage(
-      pageFormat: type == 'WITHCHALLAN'
-          ? PdfPageFormat.a4.landscape
-          : PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.all(20),
-      header: (context) => pw.Column(
-        children: [
-          _buildHeader(fromDate, toDate, status, type),
-          pw.SizedBox(height: 20),
-          _buildTableHeader(type, contrastNavy),
-          pw.SizedBox(height: 0),
-        ],
+  final grandTotal = data.fold<double>(0, (sum, item) => sum + item.amount);
+
+  for (int chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+    final chunk = chunks[chunkIndex];
+    final isLastChunk = chunkIndex == chunks.length - 1;
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: type == 'WITH CHALLAN'
+            ? PdfPageFormat.a4.landscape
+            : PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(20),
+        theme: pw.ThemeData.withFont(base: ttf, bold: ttfBold),
+        header: (context) => pw.Column(
+          children: [
+            _buildHeader(fromDate, toDate, status, type),
+            pw.SizedBox(height: 20),
+            _buildTableHeader(type, contrastNavy, borderColor),
+            pw.SizedBox(height: 0),
+          ],
+        ),
+        build: (context) {
+          final List<pw.Widget> content = [];
+
+          content.add(
+            _buildGroupTable(
+              chunk,
+              primaryColor,
+              blackColor,
+              lightGray,
+              totalRowColor,
+              contrastNavy,
+              type,
+              borderColor,
+            ),
+          );
+
+          if (isLastChunk && type != 'SUMMARY') {
+            content.add(pw.SizedBox(height: 8));
+            content.add(_buildGrandTotal(primaryColor, grandTotal));
+          }
+
+          return content;
+        },
+        footer: (context) =>
+            _buildFooter(context, chunkIndex + 1, chunks.length),
       ),
-      build: (context) => _buildContent(
-        groupedData,
-        primaryColor,
-        blackColor,
-        lightGray,
-        headerColor,
-        totalRowColor,
-        contrastNavy,
-        type,
-      ),
-      footer: (context) => _buildFooter(context),
-    ),
-  );
+    );
+  }
 
   final formattedDateTime = DateFormat(
     'dd-MM-yyyy_HH-mm',
@@ -115,7 +149,10 @@ pw.Widget _buildHeader(
                   pw.SizedBox(height: 2),
                   pw.Text(
                     'Status: $status',
-                    style: pw.TextStyle(fontSize: 11, color: PdfColors.white),
+                    style: const pw.TextStyle(
+                      fontSize: 11,
+                      color: PdfColors.white,
+                    ),
                   ),
                 ],
               ),
@@ -125,7 +162,10 @@ pw.Widget _buildHeader(
               children: [
                 pw.Text(
                   'Generated On',
-                  style: pw.TextStyle(fontSize: 10, color: PdfColors.white),
+                  style: const pw.TextStyle(
+                    fontSize: 10,
+                    color: PdfColors.white,
+                  ),
                 ),
                 pw.Text(
                   formattedDateTime,
@@ -142,15 +182,18 @@ pw.Widget _buildHeader(
         pw.SizedBox(height: 4),
         pw.Text(
           'From: $fromDate   To: $toDate',
-          style: pw.TextStyle(fontSize: 12, color: PdfColors.white),
+          style: const pw.TextStyle(fontSize: 12, color: PdfColors.white),
         ),
       ],
     ),
   );
 }
 
-pw.Widget _buildTableHeader(String type, PdfColor contrastNavy) {
-  final borderColor = PdfColor.fromHex('#D1D5DB');
+pw.Widget _buildTableHeader(
+  String type,
+  PdfColor contrastNavy,
+  PdfColor borderColor,
+) {
   List<String> headers;
   Map<int, pw.TableColumnWidth> columnWidths;
 
@@ -190,8 +233,8 @@ pw.Widget _buildTableHeader(String type, PdfColor contrastNavy) {
       'Nos',
       'Pack',
       'Qty',
-      'Dispatch Qty',
-      'Pending Qty',
+      'Dispatch',
+      'Pending',
       'Rate',
       'Amount',
       'Challan',
@@ -264,71 +307,6 @@ pw.Widget _buildTableHeader(String type, PdfColor contrastNavy) {
   );
 }
 
-List<pw.Widget> _buildContent(
-  Map<String, List<OrderReportDm>> groupedData,
-  PdfColor primaryColor,
-  PdfColor blackColor,
-  PdfColor lightGray,
-  PdfColor headerColor,
-  PdfColor totalRowColor,
-  PdfColor contrastNavy,
-  String type,
-) {
-  List<pw.Widget> content = [];
-
-  content.add(
-    _buildGroupTable(
-      groupedData.values.first,
-      primaryColor,
-      blackColor,
-      lightGray,
-      totalRowColor,
-      contrastNavy,
-      type,
-    ),
-  );
-
-  final grandTotal = groupedData.values
-      .expand((items) => items)
-      .fold<double>(0, (sum, item) => sum + item.amount);
-
-  if (type != 'SUMMARY') {
-    content.add(
-      pw.Container(
-        padding: const pw.EdgeInsets.all(12),
-        margin: const pw.EdgeInsets.only(top: 8),
-        decoration: pw.BoxDecoration(
-          color: primaryColor,
-          borderRadius: pw.BorderRadius.circular(4),
-        ),
-        child: pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Text(
-              'GRAND TOTAL',
-              style: pw.TextStyle(
-                fontSize: 12,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.white,
-              ),
-            ),
-            pw.Text(
-              grandTotal.toStringAsFixed(2),
-              style: pw.TextStyle(
-                fontSize: 12,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  return content;
-}
-
 pw.Widget _buildGroupTable(
   List<OrderReportDm> items,
   PdfColor primaryColor,
@@ -337,10 +315,9 @@ pw.Widget _buildGroupTable(
   PdfColor totalRowColor,
   PdfColor contrastNavy,
   String type,
+  PdfColor borderColor,
 ) {
-  final borderColor = PdfColor.fromHex('#D1D5DB');
   List<pw.TableRow> tableRows = [];
-
   Map<int, pw.TableColumnWidth> columnWidths;
 
   if (type == 'DETAIL') {
@@ -390,13 +367,13 @@ pw.Widget _buildGroupTable(
       final item = items[i];
 
       List<pw.Widget> rowCells = [
-        _buildCell(item.customer, blackColor),
-        _buildCell(item.item, blackColor),
-        _buildCell(item.nos.toStringAsFixed(0), blackColor),
-        _buildCell(item.pack.toStringAsFixed(2), blackColor),
-        _buildCell(item.qty.toStringAsFixed(2), blackColor),
-        _buildCell(item.dispatchQty.toStringAsFixed(2), blackColor),
-        _buildCell(item.pendingQty.toStringAsFixed(2), blackColor),
+        _buildCell(item.customer, blackColor, type),
+        _buildCell(item.item, blackColor, type),
+        _buildCell(item.nos.toStringAsFixed(0), blackColor, type),
+        _buildCell(item.pack.toStringAsFixed(2), blackColor, type),
+        _buildCell(item.qty.toStringAsFixed(2), blackColor, type),
+        _buildCell(item.dispatchQty.toStringAsFixed(2), blackColor, type),
+        _buildCell(item.pendingQty.toStringAsFixed(2), blackColor, type),
       ];
 
       tableRows.add(
@@ -411,54 +388,57 @@ pw.Widget _buildGroupTable(
   } else {
     for (int i = 0; i < items.length; i++) {
       final item = items[i];
-
       List<pw.Widget> rowCells;
 
       if (type == 'DETAIL') {
         rowCells = [
-          _buildCell(item.orderNo, blackColor),
-          _buildCell(item.orderDate, blackColor),
-          _buildCell(item.customer, blackColor),
-          _buildCell(item.item, blackColor),
-          _buildCell(item.nos.toString(), blackColor),
-          _buildCell(item.pack.toStringAsFixed(2), blackColor),
-          _buildCell(item.qty.toStringAsFixed(2), blackColor),
-          _buildCell(item.dispatchQty.toStringAsFixed(2), blackColor),
-          _buildCell(item.pendingQty.toStringAsFixed(2), blackColor),
+          _buildCell(item.orderNo, blackColor, type),
+          _buildCell(item.orderDate, blackColor, type),
+          _buildCell(item.customer, blackColor, type),
+          _buildCell(item.item, blackColor, type),
+          _buildCell(item.nos.toString(), blackColor, type),
+          _buildCell(item.pack.toStringAsFixed(2), blackColor, type),
+          _buildCell(item.qty.toStringAsFixed(2), blackColor, type),
+          _buildCell(item.dispatchQty.toStringAsFixed(2), blackColor, type),
+          _buildCell(item.pendingQty.toStringAsFixed(2), blackColor, type),
           _buildCell(
             item.rate.toStringAsFixed(4),
             blackColor,
+            type,
             isRightAlign: true,
           ),
           _buildCell(
             item.amount.toStringAsFixed(2),
             blackColor,
+            type,
             isRightAlign: true,
           ),
         ];
       } else {
         rowCells = [
-          _buildCell(item.orderNo, blackColor),
-          _buildCell(item.orderDate, blackColor),
-          _buildCell(item.customer, blackColor),
-          _buildCell(item.item, blackColor),
-          _buildCell(item.nos.toString(), blackColor),
-          _buildCell(item.pack.toStringAsFixed(2), blackColor),
-          _buildCell(item.qty.toStringAsFixed(2), blackColor),
-          _buildCell(item.dispatchQty.toStringAsFixed(2), blackColor),
-          _buildCell(item.pendingQty.toStringAsFixed(2), blackColor),
+          _buildCell(item.orderNo, blackColor, type),
+          _buildCell(item.orderDate, blackColor, type),
+          _buildCell(item.customer, blackColor, type),
+          _buildCell(item.item, blackColor, type),
+          _buildCell(item.nos.toString(), blackColor, type),
+          _buildCell(item.pack.toStringAsFixed(2), blackColor, type),
+          _buildCell(item.qty.toStringAsFixed(2), blackColor, type),
+          _buildCell(item.dispatchQty.toStringAsFixed(2), blackColor, type),
+          _buildCell(item.pendingQty.toStringAsFixed(2), blackColor, type),
           _buildCell(
             item.rate.toStringAsFixed(4),
             blackColor,
+            type,
             isRightAlign: true,
           ),
           _buildCell(
             item.amount.toStringAsFixed(2),
             blackColor,
+            type,
             isRightAlign: true,
           ),
-          _buildCell(item.challanNo, blackColor),
-          _buildCell(item.challanDate, blackColor),
+          _buildCell(item.challanNo, blackColor, type),
+          _buildCell(item.challanDate, blackColor, type),
         ];
       }
 
@@ -482,8 +462,8 @@ pw.Widget _buildGroupTable(
 
 pw.Widget _buildCell(
   String text,
-  PdfColor color, {
-  String? type,
+  PdfColor color,
+  String type, {
   bool isRightAlign = false,
 }) {
   return pw.Container(
@@ -494,14 +474,45 @@ pw.Widget _buildCell(
     child: pw.Text(
       text,
       style: pw.TextStyle(
-        fontSize: type == 'WITHCHALLAN' ? 7 : 9,
+        fontSize: type == 'WITH CHALLAN' ? 7 : 9,
         color: color,
       ),
     ),
   );
 }
 
-pw.Widget _buildFooter(pw.Context context) {
+pw.Widget _buildGrandTotal(PdfColor primaryColor, double grandTotal) {
+  return pw.Container(
+    padding: const pw.EdgeInsets.all(12),
+    decoration: pw.BoxDecoration(
+      color: primaryColor,
+      borderRadius: pw.BorderRadius.circular(4),
+    ),
+    child: pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      children: [
+        pw.Text(
+          'GRAND TOTAL',
+          style: pw.TextStyle(
+            fontSize: 12,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.white,
+          ),
+        ),
+        pw.Text(
+          grandTotal.toStringAsFixed(2),
+          style: pw.TextStyle(
+            fontSize: 12,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.white,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+pw.Widget _buildFooter(pw.Context context, int currentChunk, int totalChunks) {
   return pw.Container(
     padding: const pw.EdgeInsets.all(8),
     child: pw.Row(
@@ -509,11 +520,11 @@ pw.Widget _buildFooter(pw.Context context) {
       children: [
         pw.Text(
           'Order Report',
-          style: pw.TextStyle(fontSize: 10, color: PdfColors.black),
+          style: const pw.TextStyle(fontSize: 10, color: PdfColors.black),
         ),
         pw.Text(
           'Page ${context.pageNumber}',
-          style: pw.TextStyle(fontSize: 10, color: PdfColors.black),
+          style: const pw.TextStyle(fontSize: 10, color: PdfColors.black),
         ),
       ],
     ),
