@@ -997,7 +997,9 @@ class InvoiceEntryController extends GetxController {
       final String ledgerDesc = ledger["DESC"] as String;
       String pCode = "";
 
-      if (ledgerDesc == "Gross Total" || ledgerDesc == "Net Total") {
+      if (ledgerDesc == "Gross Total") {
+        pCode = selectedSalesAccountCode.value;
+      } else if (ledgerDesc == "Net Total") {
         pCode = selectedCustomerCode.value;
       } else {
         final customiseVoucherItem = customiseVoucher.firstWhereOrNull(

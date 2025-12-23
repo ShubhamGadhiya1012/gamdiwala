@@ -579,13 +579,13 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
             Obx(
               () => AppDropdown(
                 items: _controller.salesAccountNames,
-                hintText: 'Customer Account *',
+                hintText: 'Sales Account *',
                 onChanged: _controller.onSalesAccountSelected,
                 selectedItem:
                     _controller.selectedSalesAccountName.value.isNotEmpty
                     ? _controller.selectedSalesAccountName.value
                     : null,
-                validatorText: 'Please select a customer account.',
+                validatorText: 'Please select a Sales account.',
               ),
             ),
             AppSpaces.v10,
