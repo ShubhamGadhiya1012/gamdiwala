@@ -628,10 +628,11 @@ class InvoiceEntryController extends GetxController {
     totalCgst.value = 0.0;
 
     for (var item in itemsToSend) {
-      double amountWithGst = double.tryParse(item["Amount"].toString()) ?? 0.00;
       double igstRate = item["IGSTPerc"] ?? 0.00;
       double cgstRate = item["CGSTPerc"] ?? 0.00;
       double sgstRate = item["SGSTPerc"] ?? 0.00;
+
+      double amountWithGst = double.tryParse(item["Amount"].toString()) ?? 0.00;
 
       double baseAmount = calculateBaseAmount(
         amountWithGst,
@@ -837,7 +838,7 @@ class InvoiceEntryController extends GetxController {
         )?['NT'] ??
         'C';
 
-    double totalOriginalGrossAmount = itemsToSend.fold(
+    itemsToSend.fold(
       0.0,
       (sum, item) => sum + (double.tryParse(item["Amount"].toString()) ?? 0.0),
     );
@@ -853,13 +854,16 @@ class InvoiceEntryController extends GetxController {
       double sgst = double.tryParse(item["SGSTPerc"]?.toString() ?? '0') ?? 0.0;
 
       double baseAmount = calculateBaseAmount(amountWithGst, igst, cgst, sgst);
+      // print("base amount: ${baseAmount}");
 
-      double itemDiscount =
-          (baseAmount / totalOriginalGrossAmount) * discountAmount;
+      // print("discountAmount amount: ${discountAmount}");
+      // print("discountAmount amount: ${grossTotal}");
+      double gross_total = grossTotal.toDouble();
+      double itemDiscount = (baseAmount / gross_total) * discountAmount;
       double discountedAmount = baseAmount - itemDiscount;
-      double pfShare = (baseAmount / totalOriginalGrossAmount) * pf;
-      double freightShare = (baseAmount / totalOriginalGrossAmount) * freight;
-      double otherShare = (baseAmount / totalOriginalGrossAmount) * other;
+      double pfShare = (baseAmount / gross_total) * pf;
+      double freightShare = (baseAmount / gross_total) * freight;
+      double otherShare = (baseAmount / gross_total) * other;
 
       double amountWithCharges = discountedAmount;
       amountWithCharges += (pfNT == 'C') ? pfShare : -pfShare;

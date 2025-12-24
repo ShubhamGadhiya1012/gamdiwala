@@ -80,7 +80,7 @@ class AuthController extends GetxController {
   Future<void> loginUser() async {
     isLoading.value = true;
     String? deviceId = await DeviceHelper().getDeviceId();
-
+    print(deviceId);
     if (deviceId == null) {
       showErrorSnackbar('Login Failed', 'Unable to fetch device ID.');
       isLoading.value = false;
