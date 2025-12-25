@@ -27,6 +27,7 @@ class InvoiceEntryController extends GetxController {
   var toDateController = TextEditingController();
 
   final List<String> billPeriodOptions = [
+    'ALL',
     'Daily',
     'Monthly',
     'Weekly',

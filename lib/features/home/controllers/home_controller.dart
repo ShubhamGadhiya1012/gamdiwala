@@ -10,6 +10,7 @@ import 'package:gamdiwala/features/home/repos/home_repo.dart';
 import 'package:gamdiwala/features/home/screens/home_screen.dart';
 import 'package:gamdiwala/features/invoice_entry/screens/invoice_screen.dart';
 import 'package:gamdiwala/features/reports/screens/challan_report_screen.dart';
+import 'package:gamdiwala/features/reports/screens/invoice_report_screen.dart';
 import 'package:gamdiwala/features/reports/screens/order_report_screen.dart';
 import 'package:gamdiwala/features/user_settings/models/user_access_dm.dart';
 import 'package:gamdiwala/features/user_settings/repos/user_access_repo.dart';
@@ -279,6 +280,13 @@ class HomeController extends GetxController {
             icon: Icons.summarize_outlined,
             onTap: () {
               Get.to(() => ChallanReportScreen());
+            },
+          ),
+          HomeMenuItemDm(
+            menuName: 'Invoice Report',
+            icon: Icons.summarize_outlined,
+            onTap: () {
+              Get.to(() => InvoiceReportScreen());
             },
           ),
         ],
