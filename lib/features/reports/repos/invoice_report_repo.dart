@@ -10,9 +10,7 @@ class InvoiceReportRepo {
     required String billPeriod,
   }) async {
     String? token = await SecureStorageHelper.read('token');
-    print(fromDate);
-    print(toDate);
-    print(billPeriod);
+
     try {
       final response = await ApiService.getRequest(
         endpoint: '/Invoice/getParties',

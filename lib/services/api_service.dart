@@ -9,15 +9,22 @@ class ApiService {
       'http://192.168.0.145:8083/api'; // Dhruvilbhai debugging
 
   static Future<dynamic> getRequest({
-    required String endpoint,
+    String? endpoint,
     Map<String, String>? queryParams,
     Map<String, String>? headers,
     String? token,
+    String? fullUrl,
   }) async {
     try {
-      final url = Uri.parse(
-        '$kBaseUrl$endpoint',
-      ).replace(queryParameters: queryParams);
+      final Uri url;
+      if (fullUrl != null) {
+        url = Uri.parse(fullUrl).replace(queryParameters: queryParams);
+        print(url);
+      } else {
+        url = Uri.parse(
+          '$kBaseUrl$endpoint',
+        ).replace(queryParameters: queryParams);
+      }
 
       headers ??= {'Content-Type': 'application/json'};
 

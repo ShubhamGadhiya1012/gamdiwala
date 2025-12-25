@@ -5,6 +5,9 @@ class SaleInvoiceDm {
   final String pName;
   final String pCode;
   final int yearId;
+  final int companyCode;
+  final String bookCode;
+  final String branchCode;
 
   SaleInvoiceDm({
     required this.invNo,
@@ -13,6 +16,9 @@ class SaleInvoiceDm {
     required this.pName,
     required this.pCode,
     required this.yearId,
+    required this.companyCode,
+    required this.bookCode,
+    required this.branchCode,
   });
 
   factory SaleInvoiceDm.fromJson(Map<String, dynamic> json) {
@@ -23,6 +29,9 @@ class SaleInvoiceDm {
       pName: json['PNAME'] ?? '',
       pCode: json['PCODE'] ?? '',
       yearId: json['YearId'] ?? 0,
+      companyCode: json['CompanyCode'] ?? 0,
+      bookCode: json['BookCode'] ?? '',
+      branchCode: json['BranchCode'] ?? '',
     );
   }
 }
