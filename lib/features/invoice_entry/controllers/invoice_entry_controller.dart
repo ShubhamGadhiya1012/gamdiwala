@@ -188,6 +188,7 @@ class InvoiceEntryController extends GetxController {
         fromDate: fromDate,
         toDate: toDate,
         billPeriod: selectedBillPeriod.value,
+        type: 'Invoice',
       );
 
       parties.assignAll(fetchedParties);

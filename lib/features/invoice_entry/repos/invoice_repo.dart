@@ -66,7 +66,7 @@ class InvoiceRepo {
     required String pageSize,
   }) async {
     try {
-      final baseUrl = 'http://192.168.0.98:8080/';
+      final baseUrl = 'http://160.187.80.165:8081/';
       final url =
           '$baseUrl?InvoiceNo=$invNo&BookCode=$bookCode&YearId=$yearId&CoCode=$coCode&BranchCode=$branchCode&PageSize=$pageSize';
 

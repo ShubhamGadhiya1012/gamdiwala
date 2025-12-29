@@ -41,22 +41,15 @@ class InvoiceReportController extends GetxController {
   Future<void> onInit() async {
     super.onInit();
     final now = DateTime.now();
-    final monthStart = DateTime(now.year, now.month, 1);
+
     final formatter = DateFormat('dd-MM-yyyy');
-    fromDateController.text = formatter.format(monthStart);
+    fromDateController.text = formatter.format(now);
     toDateController.text = formatter.format(now);
 
     isLoading.value = true;
     await getVehicles();
     await getParties();
     isLoading.value = false;
-  }
-
-  @override
-  void onClose() {
-    fromDateController.dispose();
-    toDateController.dispose();
-    super.onClose();
   }
 
   void onFiltersChanged() {
@@ -87,6 +80,7 @@ class InvoiceReportController extends GetxController {
         fromDate: fromDate,
         toDate: toDate,
         billPeriod: selectedBillPeriod.value,
+        type: 'Report',
       );
 
       parties.assignAll(fetchedParties);
