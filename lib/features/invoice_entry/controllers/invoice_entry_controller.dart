@@ -116,20 +116,59 @@ class InvoiceEntryController extends GetxController {
   List<SaleInvoiceData2Dm> get data2 => saleInvoiceDetails.value?.data2 ?? [];
   List<SaleInvoiceData3Dm> get data3 => saleInvoiceDetails.value?.data3 ?? [];
 
-  @override
-  Future<void> onInit() async {
-    super.onInit();
-    fromDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-    toDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-    dateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  void setDefaultSelections() {
+    if (salesAccounts.isNotEmpty) {
+      var defaultSalesAccount = salesAccounts.firstWhereOrNull(
+        (account) => account.pName == "TAXABLE SALES A/C",
+      );
+      if (defaultSalesAccount != null) {
+        selectedSalesAccountCode.value = defaultSalesAccount.pCode;
+        selectedSalesAccountName.value = defaultSalesAccount.pName;
+      }
+    }
 
-    await getBooks(dbc: 'SALE');
-    await getCustomers();
-    await getSalesAccounts();
-    await getTaxTypes();
-    getBillTypes();
-    getInvoiceTypes();
-    await getVehicles();
+    if (taxTypes.isNotEmpty) {
+      var defaultTaxType = taxTypes.firstWhereOrNull(
+        (tax) => tax.tName == "GST LOCL",
+      );
+      if (defaultTaxType != null) {
+        selectedTaxTypeCode.value = defaultTaxType.tCode;
+        selectedTaxTypeName.value = defaultTaxType.tName;
+        isIGSTApplicable.value = defaultTaxType.igstYn;
+        isCGSTApplicable.value = defaultTaxType.cgstYn;
+        isSGSTApplicable.value = defaultTaxType.sgstYn;
+      }
+    }
+
+    if (billTypes.isNotEmpty) {
+      var defaultBillType = billTypes.firstWhereOrNull(
+        (bill) => bill.billName == "Sales Taxable",
+      );
+      if (defaultBillType != null) {
+        selectedBillTypeCode.value = defaultBillType.billCode;
+        selectedBillTypeName.value = defaultBillType.billName;
+      }
+    }
+
+    if (invoiceTypes.isNotEmpty) {
+      var defaultInvoiceType = invoiceTypes.firstWhereOrNull(
+        (invType) => invType.invoiceTypeName == "Tax Invoice",
+      );
+      if (defaultInvoiceType != null) {
+        selectedInvoiceTypeCode.value = defaultInvoiceType.invoiceTypeCode;
+        selectedInvoiceTypeName.value = defaultInvoiceType.invoiceTypeName;
+      }
+    }
+
+    if (books.isNotEmpty) {
+      var defaultBook = books.firstWhereOrNull(
+        (book) => book.description == "SALES BOOK-TAXABLE",
+      );
+      if (defaultBook != null) {
+        selectedBookCode.value = defaultBook.bookCode;
+        selectedBookDescription.value = defaultBook.description;
+      }
+    }
   }
 
   void _autoFetchParties() {
