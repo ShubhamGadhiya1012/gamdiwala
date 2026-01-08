@@ -27,6 +27,7 @@ class InvoiceEntryController extends GetxController {
   var toDateController = TextEditingController();
 
   final List<String> billPeriodOptions = [
+    'ALL',
     'Daily',
     'Monthly',
     'Weekly',
@@ -115,20 +116,59 @@ class InvoiceEntryController extends GetxController {
   List<SaleInvoiceData2Dm> get data2 => saleInvoiceDetails.value?.data2 ?? [];
   List<SaleInvoiceData3Dm> get data3 => saleInvoiceDetails.value?.data3 ?? [];
 
-  @override
-  Future<void> onInit() async {
-    super.onInit();
-    fromDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-    toDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-    dateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  void setDefaultSelections() {
+    if (salesAccounts.isNotEmpty) {
+      var defaultSalesAccount = salesAccounts.firstWhereOrNull(
+        (account) => account.pName == "TAXABLE SALES A/C",
+      );
+      if (defaultSalesAccount != null) {
+        selectedSalesAccountCode.value = defaultSalesAccount.pCode;
+        selectedSalesAccountName.value = defaultSalesAccount.pName;
+      }
+    }
 
-    await getBooks(dbc: 'SALE');
-    await getCustomers();
-    await getSalesAccounts();
-    await getTaxTypes();
-    getBillTypes();
-    getInvoiceTypes();
-    await getVehicles();
+    if (taxTypes.isNotEmpty) {
+      var defaultTaxType = taxTypes.firstWhereOrNull(
+        (tax) => tax.tName == "GST LOCL",
+      );
+      if (defaultTaxType != null) {
+        selectedTaxTypeCode.value = defaultTaxType.tCode;
+        selectedTaxTypeName.value = defaultTaxType.tName;
+        isIGSTApplicable.value = defaultTaxType.igstYn;
+        isCGSTApplicable.value = defaultTaxType.cgstYn;
+        isSGSTApplicable.value = defaultTaxType.sgstYn;
+      }
+    }
+
+    if (billTypes.isNotEmpty) {
+      var defaultBillType = billTypes.firstWhereOrNull(
+        (bill) => bill.billName == "Sales Taxable",
+      );
+      if (defaultBillType != null) {
+        selectedBillTypeCode.value = defaultBillType.billCode;
+        selectedBillTypeName.value = defaultBillType.billName;
+      }
+    }
+
+    if (invoiceTypes.isNotEmpty) {
+      var defaultInvoiceType = invoiceTypes.firstWhereOrNull(
+        (invType) => invType.invoiceTypeName == "Tax Invoice",
+      );
+      if (defaultInvoiceType != null) {
+        selectedInvoiceTypeCode.value = defaultInvoiceType.invoiceTypeCode;
+        selectedInvoiceTypeName.value = defaultInvoiceType.invoiceTypeName;
+      }
+    }
+
+    if (books.isNotEmpty) {
+      var defaultBook = books.firstWhereOrNull(
+        (book) => book.description == "SALES BOOK-TAXABLE",
+      );
+      if (defaultBook != null) {
+        selectedBookCode.value = defaultBook.bookCode;
+        selectedBookDescription.value = defaultBook.description;
+      }
+    }
   }
 
   void _autoFetchParties() {
@@ -187,6 +227,7 @@ class InvoiceEntryController extends GetxController {
         fromDate: fromDate,
         toDate: toDate,
         billPeriod: selectedBillPeriod.value,
+        type: 'Invoice',
       );
 
       parties.assignAll(fetchedParties);
@@ -628,10 +669,11 @@ class InvoiceEntryController extends GetxController {
     totalCgst.value = 0.0;
 
     for (var item in itemsToSend) {
-      double amountWithGst = double.tryParse(item["Amount"].toString()) ?? 0.00;
       double igstRate = item["IGSTPerc"] ?? 0.00;
       double cgstRate = item["CGSTPerc"] ?? 0.00;
       double sgstRate = item["SGSTPerc"] ?? 0.00;
+
+      double amountWithGst = double.tryParse(item["Amount"].toString()) ?? 0.00;
 
       double baseAmount = calculateBaseAmount(
         amountWithGst,
@@ -732,6 +774,8 @@ class InvoiceEntryController extends GetxController {
   }
 
   void updateLedger() {
+    //  print("\n========== UPDATE LEDGER START ==========");
+
     double discountPercentage =
         double.tryParse(
           customiseVoucherPercentageControllers['Discount']?.text ?? '0',
@@ -742,6 +786,8 @@ class InvoiceEntryController extends GetxController {
 
     if (discountPercentage > 0) {
       discountAmount = (grossTotal.value * discountPercentage) / 100;
+
+      discountAmount = double.parse(discountAmount.toStringAsFixed(2));
       customiseVoucherAmountControllers['Discount']?.text = discountAmount
           .toStringAsFixed(2);
     } else {
@@ -755,6 +801,10 @@ class InvoiceEntryController extends GetxController {
         discountAmount = 0.0;
       }
     }
+
+    // print("Gross Total: ${grossTotal.value.toStringAsFixed(2)}");
+    // print("Discount %: $discountPercentage");
+    // print("Discount Amount: ${discountAmount.toStringAsFixed(2)}");
 
     double pf =
         double.tryParse(
@@ -798,6 +848,14 @@ class InvoiceEntryController extends GetxController {
         ) ??
         0.0;
 
+    // print("P.F.: ${pf.toStringAsFixed(2)}");
+    // print("Freight: ${freight.toStringAsFixed(2)}");
+    // print("Other: ${other.toStringAsFixed(2)}");
+    // print("NoTaxOth: ${noTaxOth.toStringAsFixed(2)}");
+    // print("NoTaxDisc: ${noTaxDisc.toStringAsFixed(2)}");
+    // print("TCS %: $tcsPercentage");
+    // print("TCS_IT %: $tcsItPercentage");
+
     String pfNT =
         ledgerDataToSend.firstWhereOrNull((v) => v['DESC'] == 'P.F.')?['NT'] ??
         'C';
@@ -837,14 +895,23 @@ class InvoiceEntryController extends GetxController {
         )?['NT'] ??
         'C';
 
-    double totalOriginalGrossAmount = itemsToSend.fold(
-      0.0,
-      (sum, item) => sum + (double.tryParse(item["Amount"].toString()) ?? 0.0),
-    );
+    // print("\n--- NT Values (C=Credit/Add, D=Debit/Subtract) ---");
+    // print("P.F. NT: $pfNT");
+    // print("Freight NT: $freightNT");
+    // print("Other NT: $otherNT");
+    // print("IGST NT: $igstNT");
+    // print("SGST NT: $sgstNT");
+    // print("CGST NT: $cgstNT");
 
     totalIgst.value = 0.0;
     totalSgst.value = 0.0;
     totalCgst.value = 0.0;
+
+    // print("\n--- Processing Items ---");
+
+    double grossTotalRounded = double.parse(
+      grossTotal.value.toStringAsFixed(2),
+    );
 
     for (var item in itemsToSend) {
       double amountWithGst = double.tryParse(item["Amount"].toString()) ?? 0.0;
@@ -852,44 +919,117 @@ class InvoiceEntryController extends GetxController {
       double cgst = double.tryParse(item["CGSTPerc"]?.toString() ?? '0') ?? 0.0;
       double sgst = double.tryParse(item["SGSTPerc"]?.toString() ?? '0') ?? 0.0;
 
+      // print("\nItem: ${item['INAME']}");
+      // print("  Amount with GST: ${amountWithGst.toStringAsFixed(2)}");
+      // print("  IGST%: $igst, CGST%: $cgst, SGST%: $sgst");
+
       double baseAmount = calculateBaseAmount(amountWithGst, igst, cgst, sgst);
 
-      double itemDiscount =
-          (baseAmount / totalOriginalGrossAmount) * discountAmount;
+      baseAmount = double.parse(baseAmount.toStringAsFixed(2));
+      //  print("  Base Amount (without tax): ${baseAmount.toStringAsFixed(2)}");
+
+      double itemDiscount = (baseAmount / grossTotalRounded) * discountAmount;
+      itemDiscount = double.parse(itemDiscount.toStringAsFixed(2));
+
       double discountedAmount = baseAmount - itemDiscount;
-      double pfShare = (baseAmount / totalOriginalGrossAmount) * pf;
-      double freightShare = (baseAmount / totalOriginalGrossAmount) * freight;
-      double otherShare = (baseAmount / totalOriginalGrossAmount) * other;
+      discountedAmount = double.parse(discountedAmount.toStringAsFixed(2));
+
+      // print("  Item Discount: ${itemDiscount.toStringAsFixed(2)}");
+      // print("  Discounted Amount: ${discountedAmount.toStringAsFixed(2)}");
+
+      double pfShare = (baseAmount / grossTotalRounded) * pf;
+      pfShare = double.parse(pfShare.toStringAsFixed(2));
+
+      double freightShare = (baseAmount / grossTotalRounded) * freight;
+      freightShare = double.parse(freightShare.toStringAsFixed(2));
+
+      double otherShare = (baseAmount / grossTotalRounded) * other;
+      otherShare = double.parse(otherShare.toStringAsFixed(2));
+
+      // print("  PF Share: ${pfShare.toStringAsFixed(2)}");
+      // print("  Freight Share: ${freightShare.toStringAsFixed(2)}");
+      // print("  Other Share: ${otherShare.toStringAsFixed(2)}");
 
       double amountWithCharges = discountedAmount;
       amountWithCharges += (pfNT == 'C') ? pfShare : -pfShare;
       amountWithCharges += (freightNT == 'C') ? freightShare : -freightShare;
       amountWithCharges += (otherNT == 'C') ? otherShare : -otherShare;
 
+      amountWithCharges = double.parse(amountWithCharges.toStringAsFixed(2));
+      // print("  Amount with Charges: ${amountWithCharges.toStringAsFixed(2)}");
+
       if (isIGSTApplicable.value) {
-        totalIgst.value += ((amountWithCharges * igst) / 100);
+        double itemIgst = (amountWithCharges * igst) / 100;
+        itemIgst = double.parse(itemIgst.toStringAsFixed(2));
+        totalIgst.value += itemIgst;
+        // print("  Item IGST: ${itemIgst.toStringAsFixed(2)}");
       }
       if (isCGSTApplicable.value) {
-        totalCgst.value += ((amountWithCharges * cgst) / 100);
+        double itemCgst = (amountWithCharges * cgst) / 100;
+        itemCgst = double.parse(itemCgst.toStringAsFixed(2));
+        totalCgst.value += itemCgst;
+        // print("  Item CGST: ${itemCgst.toStringAsFixed(2)}");
       }
       if (isSGSTApplicable.value) {
-        totalSgst.value += ((amountWithCharges * sgst) / 100);
+        double itemSgst = (amountWithCharges * sgst) / 100;
+        itemSgst = double.parse(itemSgst.toStringAsFixed(2));
+        totalSgst.value += itemSgst;
+        // print("  Item SGST: ${itemSgst.toStringAsFixed(2)}");
       }
     }
-    double discountedGrossTotal = grossTotal.value - discountAmount;
+
+    totalIgst.value = double.parse(totalIgst.value.toStringAsFixed(2));
+    totalCgst.value = double.parse(totalCgst.value.toStringAsFixed(2));
+    totalSgst.value = double.parse(totalSgst.value.toStringAsFixed(2));
+
+    // print("\n--- Total Tax Values ---");
+    // print("Total IGST: ${totalIgst.value.toStringAsFixed(2)}");
+    // print("Total CGST: ${totalCgst.value.toStringAsFixed(2)}");
+    // print("Total SGST: ${totalSgst.value.toStringAsFixed(2)}");
+
+    double discountedGrossTotal = grossTotalRounded - discountAmount;
+    discountedGrossTotal = double.parse(
+      discountedGrossTotal.toStringAsFixed(2),
+    );
+
+    // print("\n--- Value of Goods Calculation ---");
+    // print("Discounted Gross Total: ${discountedGrossTotal.toStringAsFixed(2)}");
+
     double valueOfGoods = discountedGrossTotal;
-    valueOfGoods += (pfNT == 'C') ? pf : -pf;
-    valueOfGoods += (freightNT == 'C') ? freight : -freight;
-    valueOfGoods += (otherNT == 'C') ? other : -other;
+
+    double pfEffect = (pfNT == 'C') ? pf : -pf;
+    valueOfGoods += pfEffect;
+    valueOfGoods = double.parse(valueOfGoods.toStringAsFixed(2));
+    // print("After P.F. ($pfNT): ${valueOfGoods.toStringAsFixed(2)}");
+
+    double freightEffect = (freightNT == 'C') ? freight : -freight;
+    valueOfGoods += freightEffect;
+    valueOfGoods = double.parse(valueOfGoods.toStringAsFixed(2));
+    //  print("After Freight ($freightNT): ${valueOfGoods.toStringAsFixed(2)}");
+
+    double otherEffect = (otherNT == 'C') ? other : -other;
+    valueOfGoods += otherEffect;
+    valueOfGoods = double.parse(valueOfGoods.toStringAsFixed(2));
+    // print("After Other ($otherNT): ${valueOfGoods.toStringAsFixed(2)}");
+
+    valueOfGoodsToSend.value = valueOfGoods;
+    // print("\nValue of Goods: ${valueOfGoods.toStringAsFixed(2)}");
 
     double netTotal = valueOfGoods;
-    valueOfGoodsToSend.value = valueOfGoods;
+    //  print("Starting Net Total: ${netTotal.toStringAsFixed(2)}");
 
     if (customiseVoucherAmountControllers.containsKey('IGST')) {
       if (isIGSTApplicable.value) {
         customiseVoucherAmountControllers['IGST']!.text = totalIgst.value
             .toStringAsFixed(2);
-        netTotal += (igstNT == 'C') ? totalIgst.value : -totalIgst.value;
+        double igstEffect = (igstNT == 'C')
+            ? totalIgst.value
+            : -totalIgst.value;
+        netTotal += igstEffect;
+        netTotal = double.parse(netTotal.toStringAsFixed(2));
+        //   print(
+        //    "After IGST ($igstNT): ${netTotal.toStringAsFixed(2)} (effect: ${igstEffect.toStringAsFixed(2)})",
+        //   );
       } else {
         customiseVoucherAmountControllers['IGST']!.text = '0.00';
         totalIgst.value = 0.0;
@@ -900,7 +1040,14 @@ class InvoiceEntryController extends GetxController {
       if (isCGSTApplicable.value) {
         customiseVoucherAmountControllers['CGST']!.text = totalCgst.value
             .toStringAsFixed(2);
-        netTotal += (cgstNT == 'C') ? totalCgst.value : -totalCgst.value;
+        double cgstEffect = (cgstNT == 'C')
+            ? totalCgst.value
+            : -totalCgst.value;
+        netTotal += cgstEffect;
+        netTotal = double.parse(netTotal.toStringAsFixed(2));
+        //   print(
+        //     "After CGST ($cgstNT): ${netTotal.toStringAsFixed(2)} (effect: ${cgstEffect.toStringAsFixed(2)})",
+        //  );
       } else {
         customiseVoucherAmountControllers['CGST']!.text = '0.00';
         totalCgst.value = 0.0;
@@ -911,21 +1058,45 @@ class InvoiceEntryController extends GetxController {
       if (isSGSTApplicable.value) {
         customiseVoucherAmountControllers['SGST']!.text = totalSgst.value
             .toStringAsFixed(2);
-        netTotal += (sgstNT == 'C') ? totalSgst.value : -totalSgst.value;
+        double sgstEffect = (sgstNT == 'C')
+            ? totalSgst.value
+            : -totalSgst.value;
+        netTotal += sgstEffect;
+        netTotal = double.parse(netTotal.toStringAsFixed(2));
+        //  print(
+        //   "After SGST ($sgstNT): ${netTotal.toStringAsFixed(2)} (effect: ${sgstEffect.toStringAsFixed(2)})",
+        // );
       } else {
         customiseVoucherAmountControllers['SGST']!.text = '0.00';
         totalSgst.value = 0.0;
       }
     }
 
-    netTotal += (noTaxOthNT == 'C') ? noTaxOth : -noTaxOth;
-    netTotal += (noTaxDiscNT == 'C') ? noTaxDisc : -noTaxDisc;
+    double noTaxOthEffect = (noTaxOthNT == 'C') ? noTaxOth : -noTaxOth;
+    netTotal += noTaxOthEffect;
+    netTotal = double.parse(netTotal.toStringAsFixed(2));
+    //  print(
+    //    "After NoTaxOth ($noTaxOthNT): ${netTotal.toStringAsFixed(2)} (effect: ${noTaxOthEffect.toStringAsFixed(2)})",
+    //  );
 
-    double tcs = (grossTotal.value) * tcsPercentage / 100;
+    double noTaxDiscEffect = (noTaxDiscNT == 'C') ? noTaxDisc : -noTaxDisc;
+    netTotal += noTaxDiscEffect;
+    netTotal = double.parse(netTotal.toStringAsFixed(2));
+    //  print(
+    //    "After NoTaxDisc ($noTaxDiscNT): ${netTotal.toStringAsFixed(2)} (effect: ${noTaxDiscEffect.toStringAsFixed(2)})",
+    //  );
+
+    double tcs = (grossTotalRounded * tcsPercentage) / 100;
+    tcs = double.parse(tcs.toStringAsFixed(2));
     customiseVoucherAmountControllers['TCS.']?.text = tcs.toStringAsFixed(2);
-    netTotal += (tcsNT == 'C') ? tcs : -tcs;
+    double tcsEffect = (tcsNT == 'C') ? tcs : -tcs;
+    netTotal += tcsEffect;
+    netTotal = double.parse(netTotal.toStringAsFixed(2));
+    //  print(
+    //    "After TCS ($tcsNT): ${netTotal.toStringAsFixed(2)} (TCS: ${tcs.toStringAsFixed(2)}, effect: ${tcsEffect.toStringAsFixed(2)})",
+    //  );
 
-    double tcsItBase = grossTotal.value - discountAmount;
+    double tcsItBase = grossTotalRounded - discountAmount;
     tcsItBase += (pfNT == 'C') ? pf : -pf;
     tcsItBase += (freightNT == 'C') ? freight : -freight;
     tcsItBase += (otherNT == 'C') ? other : -other;
@@ -935,30 +1106,109 @@ class InvoiceEntryController extends GetxController {
     tcsItBase += (noTaxOthNT == 'C') ? noTaxOth : -noTaxOth;
     tcsItBase += (noTaxDiscNT == 'C') ? noTaxDisc : -noTaxDisc;
     tcsItBase += (tcsNT == 'C') ? tcs : -tcs;
+    tcsItBase = double.parse(tcsItBase.toStringAsFixed(2));
 
-    double tcsIt = tcsItBase * tcsItPercentage / 100;
+    double tcsIt = (tcsItBase * tcsItPercentage) / 100;
+    tcsIt = double.parse(tcsIt.toStringAsFixed(2));
     customiseVoucherAmountControllers['TCS_IT']?.text = tcsIt.toStringAsFixed(
       2,
     );
-    netTotal += (tcsItNT == 'C') ? tcsIt : -tcsIt;
+    double tcsItEffect = (tcsItNT == 'C') ? tcsIt : -tcsIt;
+    netTotal += tcsItEffect;
+    netTotal = double.parse(netTotal.toStringAsFixed(2));
+    //  print("TCS_IT Base: ${tcsItBase.toStringAsFixed(2)}");
+    //  print(
+    //    "After TCS_IT ($tcsItNT): ${netTotal.toStringAsFixed(2)} (TCS_IT: ${tcsIt.toStringAsFixed(2)}, effect: ${tcsItEffect.toStringAsFixed(2)})",
+    //  );
 
-    double decimalPart = netTotal - netTotal.floorToDouble();
+    //  print("\n=== ROUNDING CALCULATION ===");
+    //  print("Net Total before rounding: ${netTotal.toStringAsFixed(2)}");
 
-    if (decimalPart < 0.5) {
-      customiseVoucherAmountControllers['Round [-]']?.text = decimalPart
-          .toStringAsFixed(2);
-      customiseVoucherAmountControllers['Round [+]']?.text = 0.toStringAsFixed(
+    String netTotalStr = netTotal.toStringAsFixed(2);
+    List<String> parts = netTotalStr.split('.');
+    int decimalValue = int.parse(parts[1]);
+
+    //  print("Decimal cents: $decimalValue");
+
+    var roundMinusController = customiseVoucherAmountControllers['Round [-]'];
+    var roundPlusController = customiseVoucherAmountControllers['Round [+]'];
+
+    if (decimalValue == 0) {
+      //    print("Already rounded to whole number");
+
+      if (roundMinusController != null) {
+        roundMinusController.value = TextEditingValue(text: '0.00');
+      }
+      if (roundPlusController != null) {
+        roundPlusController.value = TextEditingValue(text: '0.00');
+      }
+
+      ledgerDataToSend.firstWhereOrNull(
+        (v) => v['DESC'] == 'Round [-]',
+      )?['AMOUNT'] = '0.00';
+      ledgerDataToSend.firstWhereOrNull(
+        (v) => v['DESC'] == 'Round [+]',
+      )?['AMOUNT'] = '0.00';
+    } else if (decimalValue < 50) {
+      double roundDownAmount = decimalValue / 100.0;
+      //    print("Using Round [-] because $decimalValue < 50");
+      //    print("Round down amount: ${roundDownAmount.toStringAsFixed(2)}");
+
+      if (roundMinusController != null) {
+        roundMinusController.value = TextEditingValue(
+          text: roundDownAmount.toStringAsFixed(2),
+        );
+      }
+      if (roundPlusController != null) {
+        roundPlusController.value = TextEditingValue(text: '0.00');
+      }
+
+      ledgerDataToSend.firstWhereOrNull(
+        (v) => v['DESC'] == 'Round [-]',
+      )?['AMOUNT'] = roundDownAmount.toStringAsFixed(
         2,
       );
-      netTotal -= decimalPart;
+      ledgerDataToSend.firstWhereOrNull(
+        (v) => v['DESC'] == 'Round [+]',
+      )?['AMOUNT'] = '0.00';
+
+      netTotal = netTotal - roundDownAmount;
     } else {
-      customiseVoucherAmountControllers['Round [+]']?.text = (1.0 - decimalPart)
-          .toStringAsFixed(2);
-      customiseVoucherAmountControllers['Round [-]']?.text = 0.toStringAsFixed(
+      double roundUpAmount = (100 - decimalValue) / 100.0;
+      //    print("Using Round [+] because $decimalValue >= 50");
+      //    print("Round up amount: ${roundUpAmount.toStringAsFixed(2)}");
+
+      if (roundPlusController != null) {
+        roundPlusController.value = TextEditingValue(
+          text: roundUpAmount.toStringAsFixed(2),
+        );
+      }
+      if (roundMinusController != null) {
+        roundMinusController.value = TextEditingValue(text: '0.00');
+      }
+
+      ledgerDataToSend.firstWhereOrNull(
+        (v) => v['DESC'] == 'Round [+]',
+      )?['AMOUNT'] = roundUpAmount.toStringAsFixed(
         2,
       );
-      netTotal = netTotal.floorToDouble() + 1.0;
+      ledgerDataToSend.firstWhereOrNull(
+        (v) => v['DESC'] == 'Round [-]',
+      )?['AMOUNT'] = '0.00';
+
+      netTotal = netTotal + roundUpAmount;
     }
+
+    netTotal = netTotal.roundToDouble();
+
+    //  print("\nNet Total FINAL (after rounding): ${netTotal.toStringAsFixed(2)}");
+    //  print(
+    //    "Round [-]: ${ledgerDataToSend.firstWhereOrNull((v) => v['DESC'] == 'Round [-]')?['AMOUNT']}",
+    //   );
+    //  print(
+    //     "Round [+]: ${ledgerDataToSend.firstWhereOrNull((v) => v['DESC'] == 'Round [+]')?['AMOUNT']}",
+    //  );
+    //  print("========== UPDATE LEDGER END ==========\n");
 
     netTotalToSend.value = netTotal;
     customiseVoucherAmountControllers['Net Total']?.text = netTotal

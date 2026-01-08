@@ -441,17 +441,64 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
             ),
+            // Replace the existing version Container with this:
             Container(
-              padding: AppPaddings.p16,
-
-              child: Center(
-                child: Text(
-                  'v${_homeController.appVersion.value}',
-                  style: TextStyles.kBoldMontserrat(
-                    fontSize: FontSizes.k12FontSize,
-                    color: kColorGrey,
-                  ),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: Colors.grey[200]!, width: 1),
                 ),
+              ),
+              child: Column(
+                children: [
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        Get.back();
+                        Get.to(() => ProfileScreen());
+                      },
+                      child: Container(
+                        padding: AppPaddings.p16,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.settings_outlined,
+                              color: kColorPrimary,
+                              size: 22,
+                            ),
+                            AppSpaces.h12,
+                            Expanded(
+                              child: Text(
+                                'Settings',
+                                style: TextStyles.kSemiBoldMontserrat(
+                                  fontSize: FontSizes.k15FontSize,
+                                  color: kColorTextPrimary,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: kColorDarkGrey.withOpacity(0.4),
+                              size: 14,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: AppPaddings.combined(horizontal: 16, vertical: 12),
+                    child: Center(
+                      child: Text(
+                        'v${_homeController.appVersion.value}',
+                        style: TextStyles.kBoldMontserrat(
+                          fontSize: FontSizes.k12FontSize,
+                          color: kColorGrey,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

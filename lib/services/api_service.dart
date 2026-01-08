@@ -3,21 +3,28 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // static const String kBaseUrl = 'http://192.168.0.135:8088/api'; // development
-  // static const String kBaseUrl = 'http://160.187.80.165:8080/api'; // production
+  static const String kBaseUrl = 'http://160.187.80.165:8080/api'; // production
   // static const String kBaseUrl = 'http://192.168.0.135:5175/api'; // Dhruvbhai debugging
-  static const String kBaseUrl =
-      'http://192.168.0.145:8083/api'; // Dhruvilbhai debugging
+  // static const String kBaseUrl =
+  //     'http://192.168.0.145:8083/api'; // Dhruvilbhai debugging
 
   static Future<dynamic> getRequest({
-    required String endpoint,
+    String? endpoint,
     Map<String, String>? queryParams,
     Map<String, String>? headers,
     String? token,
+    String? fullUrl,
   }) async {
     try {
-      final url = Uri.parse(
-        '$kBaseUrl$endpoint',
-      ).replace(queryParameters: queryParams);
+      final Uri url;
+      if (fullUrl != null) {
+        url = Uri.parse(fullUrl).replace(queryParameters: queryParams);
+        print(url);
+      } else {
+        url = Uri.parse(
+          '$kBaseUrl$endpoint',
+        ).replace(queryParameters: queryParams);
+      }
 
       headers ??= {'Content-Type': 'application/json'};
 

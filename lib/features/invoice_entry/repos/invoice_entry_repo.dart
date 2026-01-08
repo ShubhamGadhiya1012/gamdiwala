@@ -16,6 +16,7 @@ class InvoiceEntryRepo {
     required String fromDate,
     required String toDate,
     required String billPeriod,
+    required String type,
   }) async {
     String? token = await SecureStorageHelper.read('token');
     // print(fromDate);
@@ -30,6 +31,7 @@ class InvoiceEntryRepo {
           'FromDate': fromDate,
           'ToDate': toDate,
           'BillPeriod': billPeriod,
+          'Type': type,
         },
       );
 

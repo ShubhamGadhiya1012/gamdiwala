@@ -53,6 +53,12 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
       _controller.editInvNo.value = widget.invNo!;
       _controller.editYearId.value = widget.yearId!;
     }
+    _controller.fromDateController.text = DateFormat(
+      'dd-MM-yyyy',
+    ).format(DateTime.now());
+    _controller.toDateController.text = DateFormat(
+      'dd-MM-yyyy',
+    ).format(DateTime.now());
 
     _controller.dateController.text = DateFormat(
       'dd-MM-yyyy',
@@ -71,6 +77,8 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
         invNo: widget.invNo!,
         yearId: widget.yearId.toString(),
       );
+    } else {
+      _controller.setDefaultSelections();
     }
 
     if (mounted) {
@@ -877,6 +885,8 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
                       if (widget.isEdit) {
                         Get.back();
                       } else {
+                        _controller.setDefaultSelections();
+
                         setState(() {
                           _isFormMode = false;
                         });
