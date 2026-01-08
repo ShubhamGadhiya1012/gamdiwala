@@ -247,6 +247,7 @@ class HomeController extends GetxController {
         menuName: 'Order',
         icon: Icons.shopping_bag_outlined,
         onTap: () {
+          Get.back();
           Get.to(() => HomeScreen());
         },
       ),
