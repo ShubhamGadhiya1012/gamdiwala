@@ -292,7 +292,7 @@ class InvoiceEntryRepo {
 
     try {
       var response = await ApiService.postRequest(
-        endpoint: '/Invoice/salesEntry',
+        endpoint: '//Invoice/salesEntry',
         requestBody: requestBody,
         token: token,
       );

@@ -682,12 +682,14 @@ class InvoiceEntryController extends GetxController {
         sgstRate,
       );
 
+      baseAmount = double.parse(baseAmount.toStringAsFixed(2));
       grossTotal.value += baseAmount;
 
       totalIgst.value += ((baseAmount * igstRate) / 100);
       totalSgst.value += ((baseAmount * cgstRate) / 100);
       totalCgst.value += ((baseAmount * cgstRate) / 100);
     }
+    grossTotal.value = double.parse(grossTotal.value.toStringAsFixed(2));
 
     update();
   }
@@ -912,21 +914,25 @@ class InvoiceEntryController extends GetxController {
     double grossTotalRounded = double.parse(
       grossTotal.value.toStringAsFixed(2),
     );
-
+    double baseAmountTotal = 0.0;
     for (var item in itemsToSend) {
       double amountWithGst = double.tryParse(item["Amount"].toString()) ?? 0.0;
       double igst = double.tryParse(item["IGSTPerc"]?.toString() ?? '0') ?? 0.0;
       double cgst = double.tryParse(item["CGSTPerc"]?.toString() ?? '0') ?? 0.0;
       double sgst = double.tryParse(item["SGSTPerc"]?.toString() ?? '0') ?? 0.0;
 
-      // print("\nItem: ${item['INAME']}");
-      // print("  Amount with GST: ${amountWithGst.toStringAsFixed(2)}");
-      // print("  IGST%: $igst, CGST%: $cgst, SGST%: $sgst");
+      print("\nItem: ${item['INAME']}");
+      print("  Amount with GST: ${amountWithGst.toStringAsFixed(2)}");
+      print("  IGST%: $igst, CGST%: $cgst, SGST%: $sgst");
 
       double baseAmount = calculateBaseAmount(amountWithGst, igst, cgst, sgst);
 
       baseAmount = double.parse(baseAmount.toStringAsFixed(2));
-      //  print("  Base Amount (without tax): ${baseAmount.toStringAsFixed(2)}");
+      print("  Base Amount (without tax): ${baseAmount.toStringAsFixed(2)}");
+
+      baseAmountTotal += baseAmount;
+      baseAmountTotal = double.parse(baseAmountTotal.toStringAsFixed(2));
+      print(baseAmountTotal);
 
       double itemDiscount = (baseAmount / grossTotalRounded) * discountAmount;
       itemDiscount = double.parse(itemDiscount.toStringAsFixed(2));
