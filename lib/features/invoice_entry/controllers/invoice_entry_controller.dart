@@ -1260,12 +1260,12 @@ class InvoiceEntryController extends GetxController {
           String voucherPCode = customiseVoucherItem.pCode.trim();
 
           if (voucherPCode.isEmpty || voucherPCode == "< SALES >") {
-            pCode = selectedCustomerCode.value;
+            pCode = selectedSalesAccountCode.value;
           } else {
             pCode = voucherPCode;
           }
         } else {
-          pCode = selectedCustomerCode.value;
+          pCode = selectedSalesAccountCode.value;
         }
       }
 

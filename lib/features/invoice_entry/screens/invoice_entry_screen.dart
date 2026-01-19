@@ -879,7 +879,7 @@ class _InvoiceEntryScreenState extends State<InvoiceEntryScreen> {
                 Expanded(
                   child: AppButton(
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      Get.back();
                       _controller.clearAll();
 
                       if (widget.isEdit) {
