@@ -999,7 +999,7 @@ class InvoiceEntryController extends GetxController {
     );
 
     // print("\n--- Value of Goods Calculation ---");
-    // print("Discounted Gross Total: ${discountedGrossTotal.toStringAsFixed(2)}");
+    print("Discounted Gross Total: ${discountedGrossTotal.toStringAsFixed(2)}");
 
     double valueOfGoods = discountedGrossTotal;
 

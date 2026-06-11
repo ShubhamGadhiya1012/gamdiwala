@@ -285,14 +285,14 @@ class InvoiceEntryRepo {
       "ItemData": itemData,
       "LedgerData": ledgerData,
     };
-
+  
     requestBody.forEach((key, value) {
       print('$key: $value');
     });
 
     try {
       var response = await ApiService.postRequest(
-        endpoint: '//Invoice/salesEntry',
+        endpoint: '/Invoice/salesEntry',
         requestBody: requestBody,
         token: token,
       );
