@@ -40,6 +40,20 @@ class InvoiceCard extends StatelessWidget {
               ),
               AppSpaces.h10,
               InkWell(
+                onTap: () => _showSalesInvoicePrintDialog(context),
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.green.withOpacity(0.1),
+                    border: Border.all(color: Colors.green, width: 2),
+                  ),
+                  child: Icon(Icons.print, size: 16, color: Colors.green),
+                ),
+              ),
+              AppSpaces.h10,
+              InkWell(
                 onTap: () => _showPrintDialog(context),
                 child: Container(
                   width: 28,
@@ -221,6 +235,145 @@ class InvoiceCard extends StatelessWidget {
                     style: TextStyles.kBoldMontserrat(
                       fontSize: FontSizes.k16FontSize,
                       color: kColorTextPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: kColorDarkGrey),
+          ],
+        ),
+      ),
+    );
+  }
+
+    void _showSalesInvoicePrintDialog(BuildContext context) {
+    final controller = Get.find<InvoiceController>();
+ 
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: kColorWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentPadding: AppPaddings.p20,
+          title: Row(
+            children: [
+              Container(
+                padding: AppPaddings.p10,
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.print, color: Colors.green, size: 28),
+              ),
+              AppSpaces.h12,
+              Expanded(
+                child: Text(
+                  'Print Sales Invoice',
+                  style: TextStyles.kBoldMontserrat(
+                    fontSize: FontSizes.k18FontSize,
+                    color: kColorTextPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Select printing size for invoice ${sale.invNo}',
+                style: TextStyles.kMediumMontserrat(
+                  fontSize: FontSizes.k14FontSize,
+                  color: kColorDarkGrey,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              AppSpaces.v20,
+              // Half Print Option
+              _buildSalesInvoicePrintOption(
+                context: context,
+                icon: Icons.receipt,
+                title: 'Half Print',
+                subtitle: 'Print on half page',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  controller.printSalesInvoice(
+                    invNo: sale.invNo,
+                    pageSize: 'HALF',
+                  );
+                },
+              ),
+              AppSpaces.v12,
+              // Full Print Option
+              _buildSalesInvoicePrintOption(
+                context: context,
+                icon: Icons.description,
+                title: 'Full Print',
+                subtitle: 'Print on full page',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  controller.printSalesInvoice(
+                    invNo: sale.invNo,
+                    pageSize: 'FULL',
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+ 
+    Widget _buildSalesInvoicePrintOption({
+      required BuildContext context,
+      required IconData icon,
+      required String title,
+      required String subtitle,
+      required VoidCallback onTap,
+    }) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: AppPaddings.p16,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.grey.shade50,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: AppPaddings.p12,
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: Colors.green, size: 24),
+              ),
+              AppSpaces.h16,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyles.kBoldMontserrat(
+                        fontSize: FontSizes.k16FontSize,
+                        color: kColorTextPrimary,
+                      ),
+                    ),
+                    AppSpaces.v2,
+                    Text(
+                      subtitle,
+                      style: TextStyles.kRegularMontserrat(
+                        fontSize: FontSizes.k12FontSize,
+                        color: kColorDarkGrey,
                     ),
                   ),
                 ],

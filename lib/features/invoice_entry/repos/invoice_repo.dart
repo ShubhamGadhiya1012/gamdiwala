@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:gamdiwala/features/invoice_entry/models/sale_invoice_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/models/sale_invoice_detail_dm.dart';
+import 'package:gamdiwala/features/invoice_entry/models/sale_invoice_pdf_dm.dart';
 import 'package:gamdiwala/services/api_service.dart';
 import 'package:gamdiwala/utils/helpers/secure_storage_helper.dart';
 
@@ -71,6 +72,7 @@ class InvoiceRepo {
           '$baseUrl?InvoiceNo=$invNo&BookCode=$bookCode&YearId=$yearId&CoCode=$coCode&BranchCode=$branchCode&PageSize=$pageSize';
 
       // print('Print Invoice URL: $url');
+      // print('InvoiceNo: $invNo');
 
       final response = await ApiService.getRequest(fullUrl: url);
 
@@ -85,6 +87,26 @@ class InvoiceRepo {
       }
     } catch (e) {
       // print('Print invoice error: $e');
+      rethrow;
+    }
+  }
+  
+ static Future<SaleInvoicePdfDm?> printSalesInvoice({
+    required String invNo,
+  }) async {
+    String? token = await SecureStorageHelper.read('token');  
+ 
+    try {
+      final response = await ApiService.getRequest(
+        endpoint: '/Invoice/salesPDFData',
+        queryParams: {'Invno': invNo},
+        token: token,
+      );
+ 
+      if (response == null) return null;
+ 
+      return SaleInvoicePdfDm.fromJson(response);
+    } catch (e) {
       rethrow;
     }
   }

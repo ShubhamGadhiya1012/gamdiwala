@@ -19,7 +19,6 @@ Future<void> _loadFonts() async {
   );
 }
 
-/// [pageSize] = 'HALF' or 'FULL'
 Future<void> generateSaleInvoicePdf({
   required SaleInvoicePdfDm pdfData,
   required String pageSize,
@@ -28,52 +27,57 @@ Future<void> generateSaleInvoicePdf({
   await _loadFonts();
 
   final isHalf = pageSize == 'HALF';
-
-  // Half = no blank space (tight), Full = A4 full page
-  final format = isHalf ? _halfPageFormat(pdfData) : PdfPageFormat.a4;
-
   final pdf = pw.Document();
 
-  pdf.addPage(
-    pw.Page(
-      pageFormat: format,
-      margin: const pw.EdgeInsets.all(12),
-      build: (_) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
+  if (isHalf) {
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(12),
+        build: (context) => [
           _buildHeader(pdfData.data1.first),
           pw.SizedBox(height: 4),
           _buildInvoiceInfoRow(pdfData.data1.first, pdfData.data2.first),
           pw.SizedBox(height: 4),
           _buildPartyAndInvoiceDetails(pdfData.data2.first, pdfData.data3),
           pw.SizedBox(height: 4),
-          _buildItemsTable(pdfData.data3, isHalf),
+          _buildItemsTable(pdfData.data3, isHalf: true),
           pw.SizedBox(height: 4),
-          _buildHsnAndSummary(
-            pdfData.data3,
-            pdfData.data4,
-            pdfData.data2.first,
-          ),
+          _buildHsnAndSummary(pdfData.data3, pdfData.data4, pdfData.data2.first),
+          pw.SizedBox(height: 4),
+          _buildFooter(pdfData.data1.first, pdfData.data5),
+        ],
+      ),
+    );
+  } else {
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(12),
+        build: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            _buildHeader(pdfData.data1.first),
+            pw.SizedBox(height: 4),
+            _buildInvoiceInfoRow(pdfData.data1.first, pdfData.data2.first),
+            pw.SizedBox(height: 4),
+            _buildPartyAndInvoiceDetails(pdfData.data2.first, pdfData.data3),
+            pw.SizedBox(height: 4),
+            pw.Expanded(
+              child: _buildItemsTable(pdfData.data3, isHalf: false),
+            ),
+            pw.SizedBox(height: 4),
+            _buildHsnAndSummary(pdfData.data3, pdfData.data4, pdfData.data2.first),
           pw.SizedBox(height: 4),
           _buildFooter(pdfData.data1.first, pdfData.data5),
         ],
       ),
     ),
   );
+  }
 
   final bytes = await pdf.save();
   await _savePdfAndOpen(bytes, invNo, pageSize);
-}
-
-/// Approximate half-page height based on item count
-PdfPageFormat _halfPageFormat(SaleInvoicePdfDm data) {
-  const double fixedPts = 80 + 70 + 20 + 20 + 4 * 16 + 80 + 24;
-  final double itemsPts = data.data3.length * 36.0;
-  final double totalHeight = fixedPts + itemsPts;
-  return PdfPageFormat(
-    PdfPageFormat.a4.width,
-    totalHeight.clamp(300, PdfPageFormat.a4.height),
-  );
 }
 
 pw.Widget _buildHeader(PdfData1Dm c) {
@@ -215,7 +219,6 @@ pw.Widget _buildPartyAndInvoiceDetails(PdfData2Dm inv, List<PdfData3Dm> items) {
   );
 }
 
-// Group items by IGName
 Map<String, List<PdfData3Dm>> _groupByIgName(List<PdfData3Dm> items) {
   final map = <String, List<PdfData3Dm>>{};
   for (final item in items) {
@@ -224,16 +227,25 @@ Map<String, List<PdfData3Dm>> _groupByIgName(List<PdfData3Dm> items) {
   return map;
 }
 
-pw.Widget _buildItemsTable(List<PdfData3Dm> items, bool isHalf) {
+final _itemsTableBorder = pw.TableBorder(
+  top: const pw.BorderSide(color: PdfColors.grey700, width: 0.5),
+  bottom: const pw.BorderSide(color: PdfColors.grey700, width: 0.5),
+  left: const pw.BorderSide(color: PdfColors.grey700, width: 0.5),
+  right: const pw.BorderSide(color: PdfColors.grey700, width: 0.5),
+  verticalInside: const pw.BorderSide(color: PdfColors.grey700, width: 0.5),
+);
+
+pw.Widget _buildItemsTable(List<PdfData3Dm> items, {
+  required bool isHalf,
+}) {
   final grouped = _groupByIgName(items);
   int srNo = 1;
 
   final rows = <pw.TableRow>[];
 
-  // Header row
   rows.add(
     pw.TableRow(
-      decoration: pw.BoxDecoration(color: PdfColors.grey200),
+      decoration: const pw.BoxDecoration(color: PdfColors.grey200),
       children: [
         _thCell('Sr\nNo'),
         _thCell('Item Description (HSN No)'),
@@ -313,20 +325,19 @@ pw.Widget _buildItemsTable(List<PdfData3Dm> items, bool isHalf) {
   });
 
   if (!isHalf) {
-    final currentItemRows = items.length;
-    final minRows = 8;
-    final fillerCount = (minRows - currentItemRows).clamp(0, minRows);
-    for (int i = 0; i < fillerCount; i++) {
+    const int minFillerRows = 12;
+    final int filler = (minFillerRows - items.length).clamp(0, minFillerRows);
+    for (int i = 0; i < filler; i++) {
       rows.add(
         pw.TableRow(
-          children: List.generate(7, (_) => pw.Container(height: 16)),
+          children: List.generate(7, (_) => pw.Container(height: 26)),
         ),
       );
     }
   }
 
   return pw.Table(
-    border: pw.TableBorder.all(color: PdfColors.grey700, width: 0.5),
+    border: _itemsTableBorder,
     columnWidths: const {
       0: pw.FlexColumnWidth(0.4),
       1: pw.FlexColumnWidth(4),
@@ -367,14 +378,13 @@ pw.Widget _buildHsnAndSummary(
     children: [
       pw.TableRow(
         children: [
-          // HSN table
           pw.Table(
             border: pw.TableBorder(
-              verticalInside: pw.BorderSide(
+              verticalInside: const pw.BorderSide(
                 color: PdfColors.grey700,
                 width: 0.5,
               ),
-              horizontalInside: pw.BorderSide(
+              horizontalInside: const pw.BorderSide(
                 color: PdfColors.grey700,
                 width: 0.5,
               ),
@@ -389,7 +399,7 @@ pw.Widget _buildHsnAndSummary(
             },
             children: [
               pw.TableRow(
-                decoration: pw.BoxDecoration(color: PdfColors.grey200),
+                decoration: const pw.BoxDecoration(color: PdfColors.grey200),
                 children: [
                   _thCell('HSN/SAC No'),
                   _thCell('Taxable Value'),
@@ -434,7 +444,6 @@ pw.Widget _buildHsnAndSummary(
               ),
             ],
           ),
-          // Summary right side
           pw.Padding(
             padding: const pw.EdgeInsets.all(4),
             child: pw.Column(
@@ -492,7 +501,6 @@ pw.Widget _buildFooter(PdfData1Dm c, List<PdfData5Dm> terms) {
   return pw.Table(
     border: pw.TableBorder.all(color: PdfColors.grey700, width: 0.5),
     children: [
-      // Amount in words / reverse charge row
       pw.TableRow(
         children: [
           pw.Padding(
@@ -504,24 +512,16 @@ pw.Widget _buildFooter(PdfData1Dm c, List<PdfData5Dm> terms) {
           ),
         ],
       ),
-      // ── FIX: use a nested Table instead of Row+Expanded ──────────────────
-      // pw.Row with pw.Expanded inside a pw.Table cell causes the
-      // "Flex children have non-zero flex but incoming width constraints are
-      // unbounded" crash because the table cell does not provide a bounded
-      // width to its child before layout.  A nested pw.Table with explicit
-      // FlexColumnWidth solves this because tables always resolve column
-      // widths before laying out children.
       pw.TableRow(
         children: [
           pw.Table(
             columnWidths: const {
-              0: pw.FlexColumnWidth(3), // terms / bank details side
-              1: pw.FlexColumnWidth(1), // signature side
+              0: pw.FlexColumnWidth(3),
+              1: pw.FlexColumnWidth(1),
             },
             children: [
               pw.TableRow(
                 children: [
-                  // ── Left: terms & bank details ──────────────────────────
                   pw.Padding(
                     padding: const pw.EdgeInsets.all(4),
                     child: pw.Column(
@@ -580,7 +580,6 @@ pw.Widget _buildFooter(PdfData1Dm c, List<PdfData5Dm> terms) {
                       ],
                     ),
                   ),
-                  // ── Right: authorised signature ─────────────────────────
                   pw.Padding(
                     padding: const pw.EdgeInsets.all(4),
                     child: pw.Column(

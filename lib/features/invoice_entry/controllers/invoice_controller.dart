@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:gamdiwala/features/invoice_entry/models/sale_invoice_dm.dart';
 import 'package:gamdiwala/features/invoice_entry/repos/invoice_repo.dart';
+import 'package:gamdiwala/features/invoice_entry/widgets/sale_invoice_pdf.dart';
 import 'package:gamdiwala/utils/dialogs/app_dialogs.dart';
 import 'package:get/get.dart';
 import 'dart:io';
@@ -155,6 +156,35 @@ class InvoiceController extends GetxController {
       }
     } catch (e) {
       showErrorSnackbar('Error', 'Failed to save PDF: ${e.toString()}');
+    }
+  }
+
+  Future<void> printSalesInvoice({
+    required String invNo,
+    required String pageSize,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      final pdfData = await InvoiceRepo.printSalesInvoice(invNo: invNo);
+
+      if (pdfData != null) {
+        await generateSaleInvoicePdf(
+          pdfData: pdfData,
+          pageSize: pageSize,
+          invNo: invNo,
+        );
+      } else {
+        showErrorSnackbar('Error', 'Failed to fetch invoice data.');
+      }
+    } catch (e) {
+      if (e is Map<String, dynamic>) {
+        showErrorSnackbar('Error', e['message']);
+      } else {
+        showErrorSnackbar('Error', e.toString());
+      }
+    } finally {
+      isLoading.value = false;
     }
   }
 }
